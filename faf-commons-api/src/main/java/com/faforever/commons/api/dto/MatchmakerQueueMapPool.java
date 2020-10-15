@@ -1,5 +1,6 @@
 package com.faforever.commons.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.EqualsAndHashCode;
@@ -19,6 +20,7 @@ public class MatchmakerQueueMapPool extends AbstractEntity {
     private MatchmakerQueue matchmakerQueue;
 
     @Relationship("mapPool")
+    @JsonIgnore
     private MapPool mapPool;
 
 }
