@@ -15,8 +15,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
-import static java.nio.file.StandardOpenOption.*;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 @Slf4j
 public final class Unzipper {
@@ -29,7 +32,14 @@ public final class Unzipper {
       long outputFilesBytesWritten = 0;
       int filesExtracted = 0;
       while ((archiveEntry = archiveInputStream.getNextEntry()) != null) {
-        Path targetFile = targetDirectory.resolve(archiveEntry.getName());
+        Path entryPath = Paths.get(archiveEntry.getName()).normalize();
+
+        if (entryPath.startsWith("/") || entryPath.startsWith("..")) {
+          throw new ZipSlipException("Zip slip content detected. Aborting unzip process");
+        }
+
+        Path targetFile = targetDirectory.resolve(entryPath);
+
         if (archiveEntry.isDirectory()) {
           log.trace("Creating directory {}", targetFile);
           Files.createDirectories(targetFile);

@@ -3,7 +3,6 @@ package com.faforever.commons.io;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -11,8 +10,14 @@ import java.util.Random;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 class ZipperAndUnzipperTest {
 
@@ -85,7 +90,7 @@ class ZipperAndUnzipperTest {
     Unzipper unzipper = Unzipper.from(path)
       .to(folderToUnzip);
 
-    assertThrows(AccessDeniedException.class, unzipper::unzip);
+    assertThrows(ZipSlipException.class, unzipper::unzip);
   }
 
   @Test
