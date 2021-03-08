@@ -3,7 +3,7 @@ version '1.0-SNAPSHOT'
 dependencies {
   implementation("com.github.jasminb:jsonapi-converter:${jsonapiConverterVersion}")
   implementation("com.github.rutledgepaulv:q-builders:${qBuildersVersion}")
-  compile project(":faf-commons-data")
+  implementation project(":faf-commons-data")
 
   testImplementation("pl.pojo:pojo-tester:${pojoTesterVersion}")
 }
