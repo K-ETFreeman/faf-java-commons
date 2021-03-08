@@ -72,7 +72,8 @@ class ZipperAndUnzipperTest {
 
     Unzipper unzipper = Unzipper
       .from(path)
-      .to(targetFolder);
+      .to(targetFolder)
+      .byteCountInterval(1);
 
     assertThrows(ZipBombException.class, unzipper::unzip);
   }
