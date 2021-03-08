@@ -1,0 +1,13 @@
+name: Build
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container: adoptopenjdk:11-jdk-hotspot-bionic
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Gradle build
+        env:
+          GRADLE_CLI_OPTS: ""
+        run: "chmod +x ./gradlew && ./gradlew ${GRADLE_CLI_OPTS} build"
