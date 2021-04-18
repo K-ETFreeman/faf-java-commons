@@ -28,6 +28,7 @@ subprojects {
     annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
     compileOnly("org.projectlombok:lombok:${lombokVersion}")
     compileOnly("org.jetbrains:annotations:${jetbrainsAnnotationsVersion}")
+    compileOnly("com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}")
     annotationProcessor("org.slf4j:slf4j-api:${slf4jVersion}")
     compileOnly("org.slf4j:slf4j-api:${slf4jVersion}")
 

@@ -1,2 +1,3 @@
 include ':faf-commons-api'
 include ':faf-commons-data'
+include ':faf-commons-lobby'
