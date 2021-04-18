@@ -4,52 +4,54 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
 
-@Getter
-@Setter
+@Data
+@ToString(onlyExplicitlyIncluded = true, callSuper = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("player")
 public class Player extends AbstractEntity {
-    private String login;
-    @Relationship("names")
-    List<NameRecord> names;
-    @RestrictedVisibility("IsModerator")
-    private String email;
-    private String userAgent;
-    @RestrictedVisibility("IsModerator")
-    private String steamId;
-    @RestrictedVisibility("IsModerator")
-    private String recentIpAddress;
-    @RestrictedVisibility("IsModerator")
-    private OffsetDateTime lastLogin;
+  @ToString.Include
+  private String login;
+  @RestrictedVisibility("IsModerator")
+  private String email;
+  private String userAgent;
+  @RestrictedVisibility("IsModerator")
+  private String steamId;
+  @RestrictedVisibility("IsModerator")
+  private String recentIpAddress;
+  @RestrictedVisibility("IsModerator")
+  private OffsetDateTime lastLogin;
 
-    @Relationship("globalRating")
-    private GlobalRating globalRating;
+  @Relationship("names")
+  private List<NameRecord> names;
 
-    @Relationship("ladder1v1Rating")
-    private Ladder1v1Rating ladder1v1Rating;
+  @Deprecated
+  @Relationship("globalRating")
+  private GlobalRating globalRating;
 
-    @Relationship("lobbyGroup")
-    private LobbyGroup lobbyGroup;
+  @Deprecated
+  @Relationship("ladder1v1Rating")
+  private Ladder1v1Rating ladder1v1Rating;
 
-    @Relationship("bans")
-    private List<BanInfo> bans;
+  @Deprecated
+  @Relationship("lobbyGroup")
+  private LobbyGroup lobbyGroup;
 
-    @Relationship("avatarAssignments")
-    @JsonIgnore
-    private List<AvatarAssignment> avatarAssignments;
+  @Relationship("bans")
+  private List<BanInfo> bans;
 
-    @JsonBackReference
-    @Relationship("reporterOnModerationReports")
-    private Set<ModerationReport> reporterOnModerationReports;
+  @Relationship("avatarAssignments")
+  @JsonIgnore
+  private List<AvatarAssignment> avatarAssignments;
 
-    @Override
-    public String toString() {
-        return String.format("%s [id %s]", login, id);
-    }
+  @JsonBackReference
+  @Relationship("reporterOnModerationReports")
+  private Set<ModerationReport> reporterOnModerationReports;
 }

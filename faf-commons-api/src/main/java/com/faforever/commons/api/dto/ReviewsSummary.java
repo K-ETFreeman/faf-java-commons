@@ -1,8 +1,6 @@
 package com.faforever.commons.api.dto;
 
 import com.github.jasminb.jsonapi.annotations.Id;
-import com.github.jasminb.jsonapi.annotations.Relationship;
-import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -10,15 +8,15 @@ import lombok.ToString;
 @Data
 @ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Type("playerEvent")
-public class PlayerEvent {
+public class ReviewsSummary {
   @Id
   @ToString.Include
   @EqualsAndHashCode.Include
   private String id;
-  private int currentCount;
+  private float positive;
+  private float negative;
+  private float score;
+  private int reviews;
+  private float lowerBound;
 
-  @Relationship("event")
-  @ToString.Include
-  private Event event;
 }

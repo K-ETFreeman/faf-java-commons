@@ -13,12 +13,16 @@ import java.util.List;
 
 @Data
 @Type("tutorialCategory")
-@ToString(exclude={"tutorials"})
-@EqualsAndHashCode(exclude={"tutorials"})
+@ToString(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class TutorialCategory implements ElideEntity {
   @Id
+  @ToString.Include
+  @EqualsAndHashCode.Include
   private String id;
+  @ToString.Include
   private String categoryKey;
+  @ToString.Include
   private String category;
   @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
   @Relationship("tutorials")

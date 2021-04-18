@@ -3,17 +3,18 @@ package com.faforever.commons.api.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.ToString;
 
 import java.time.OffsetDateTime;
 
-@EqualsAndHashCode(callSuper = true)
+@Data
+@ToString(onlyExplicitlyIncluded = true, callSuper = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("avatarAssignment")
-@Getter
-@Setter
 public class AvatarAssignment extends AbstractEntity {
+  @ToString.Include
   private Boolean selected;
   private OffsetDateTime expiresAt;
   @Relationship("player")

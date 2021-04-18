@@ -5,14 +5,18 @@ import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
+@ToString(onlyExplicitlyIncluded = true, callSuper = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("playerAchievement")
 public class PlayerAchievement extends AbstractEntity {
-    private AchievementState state;
-    private Integer currentSteps;
+  @ToString.Include
+  private AchievementState state;
+  private Integer currentSteps;
 
-    @Relationship("achievement")
-    private AchievementDefinition achievement;
+  @Relationship("achievement")
+  @ToString.Include
+  private AchievementDefinition achievement;
 }

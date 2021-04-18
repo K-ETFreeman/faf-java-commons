@@ -1,16 +1,17 @@
 package com.faforever.commons.api.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.Set;
 
 @Type("moderationReport")
-@Getter
-@Setter
+@Data
+@ToString(onlyExplicitlyIncluded = true, callSuper = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 public class ModerationReport extends AbstractEntity {
   private String reportDescription;
   private ModerationReportStatus reportStatus;
@@ -19,18 +20,13 @@ public class ModerationReport extends AbstractEntity {
   private String moderatorPrivateNote;
 
   @Relationship("bans")
-  @JsonIgnore
   private Set<BanInfo> bans;
   @Relationship("reporter")
-  @JsonIgnore
   private Player reporter;
   @Relationship("game")
-  @JsonIgnore
   private Game game;
   @Relationship("lastModerator")
-  @JsonIgnore
   private Player lastModerator;
   @Relationship("reportedUsers")
-  @JsonIgnore
   private Set<Player> reportedUsers;
 }

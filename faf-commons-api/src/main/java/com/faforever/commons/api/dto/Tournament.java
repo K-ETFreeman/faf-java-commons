@@ -4,35 +4,40 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 import com.github.jasminb.jsonapi.annotations.Id;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Value;
+import lombok.ToString;
 
 import java.time.OffsetDateTime;
 
-@Value
-@EqualsAndHashCode(of = "id")
+@Data
+@ToString(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = As.WRAPPER_OBJECT)
 public class Tournament {
   @Id
-  String id;
-  String name;
-  String description;
+  @ToString.Include
+  @EqualsAndHashCode.Include
+  private String id;
+  @ToString.Include
+  private String name;
+  private String description;
   @JsonProperty("tournament_type")
-  String tournamentType;
+  private String tournamentType;
   @JsonProperty("created_at")
-  OffsetDateTime createdAt;
+  private OffsetDateTime createdAt;
   @JsonProperty("participants_count")
-  int participantCount;
+  private int participantCount;
   @JsonProperty("start_at")
-  OffsetDateTime startingAt;
+  private OffsetDateTime startingAt;
   @JsonProperty("completed_at")
-  OffsetDateTime completedAt;
+  private OffsetDateTime completedAt;
   @JsonProperty("full_challonge_url")
-  String challongeUrl;
+  private String challongeUrl;
   @JsonProperty("live_image_url")
-  String liveImageUrl;
+  private String liveImageUrl;
   @JsonProperty("sign_up_url")
-  String signUpUrl;
+  private String signUpUrl;
   @JsonProperty("open_signup")
-  boolean openForSignup;
+  private boolean openForSignup;
 }

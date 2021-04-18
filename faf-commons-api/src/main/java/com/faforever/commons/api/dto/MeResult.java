@@ -3,20 +3,25 @@ package com.faforever.commons.api.dto;
 import com.faforever.commons.api.elide.ElideEntity;
 import com.github.jasminb.jsonapi.annotations.Id;
 import com.github.jasminb.jsonapi.annotations.Type;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.Set;
 
 @Type(MeResult.TYPE_NAME)
-@Getter
-@Setter
+@Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(onlyExplicitlyIncluded = true)
 public class MeResult implements ElideEntity {
 
   public static final String TYPE_NAME = "me";
 
   @Id
+  @ToString.Include
+  @EqualsAndHashCode.Include
   private String userId;
+  @ToString.Include
   private String userName;
   private String email;
   private Clan clan;
@@ -28,6 +33,7 @@ public class MeResult implements ElideEntity {
     return userId;
   }
 
+  @Data
   public static class Clan {
     private Integer id;
     private Integer membershipId;

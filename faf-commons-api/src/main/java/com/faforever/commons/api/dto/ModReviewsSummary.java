@@ -6,11 +6,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+@Type("modReviewsSummary")
 @Data
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
-@Type("gameReviewsSummary")
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
-public class GameReviewsSummary extends ReviewsSummary {
-  @Relationship("game")
-  private Game game;
+public class ModReviewsSummary extends ReviewsSummary {
+  @Relationship("mod")
+  @ToString.Include
+  private Mod mod;
 }

@@ -13,39 +13,47 @@ import java.util.Map;
 @Getter
 @AllArgsConstructor
 public enum Faction {
-    // Order is crucial
-    AEON("aeon"),
-    CYBRAN("cybran"),
-    UEF("uef"),
-    SERAPHIM("seraphim"),
-    NOMAD("nomad"),
-    CIVILIAN("civilian");
+  // Order is crucial
+  // Same order as the info from the server (1=UEF etc.)
+  UEF("uef"),
+  AEON("aeon"),
+  CYBRAN("cybran"),
+  SERAPHIM("seraphim"),
+  RANDOM("random"),
+  CIVILIAN("civilian");
 
-    private static final Map<String, Faction> fromString;
+  private static final Map<String, Faction> fromString;
 
-    static {
-        fromString = new HashMap<>();
-        for (Faction faction : values()) {
-            fromString.put(faction.string, faction);
-        }
+  static {
+    fromString = new HashMap<>();
+    for (Faction faction : values()) {
+      fromString.put(faction.string, faction);
     }
+  }
 
-    private final String string;
+  private final String string;
 
-    @JsonCreator
-    public static Faction fromFaValue(int value) {
-        return Faction.values()[value - 1];
-    }
+  @JsonCreator
+  public static Faction fromFaValue(int value) {
+    return Faction.values()[value - 1];
+  }
 
-    public static Faction fromString(String string) {
-        return fromString.get(string);
-    }
+  public static Faction fromString(String string) {
+    return fromString.get(string);
+  }
 
-    /**
-     * Returns the faction value used as in "Forged Alliance Forever".
-     */
-    @JsonValue
-    public int toFaValue() {
-        return ordinal() + 1;
-    }
+  /**
+   * Returns the faction value used as in "Forged Alliance Forever".
+   */
+  @JsonValue
+  public int toFaValue() {
+    return ordinal() + 1;
+  }
+
+  /**
+   * Returns the string value of the faction, as used in the game and the server.
+   */
+  public String getString() {
+    return string;
+  }
 }

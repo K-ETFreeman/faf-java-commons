@@ -2,20 +2,23 @@ package com.faforever.commons.api.dto;
 
 import com.github.jasminb.jsonapi.annotations.Id;
 import com.github.jasminb.jsonapi.annotations.Type;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 /**
  * @deprecated LobbyGroups are supposed to be replaced with role based security
  */
-@Getter
+
 @Deprecated
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
+@ToString(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Type("lobbyGroup")
 public class LobbyGroup {
-    @Id
-    private String userId;
-    private LegacyAccessLevel accessLevel;
+  @Id
+  @ToString.Include
+  @EqualsAndHashCode.Include
+  private String userId;
+  private LegacyAccessLevel accessLevel;
 }

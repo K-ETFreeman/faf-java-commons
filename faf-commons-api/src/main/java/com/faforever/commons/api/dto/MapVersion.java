@@ -2,18 +2,18 @@ package com.faforever.commons.api.dto;
 
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.ToString;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 import java.util.List;
 
-@Getter
-@Setter
-@EqualsAndHashCode(callSuper = true)
+@Data
+@ToString(onlyExplicitlyIncluded = true, callSuper = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("mapVersion")
 public class MapVersion extends AbstractEntity {
   private String description;
@@ -21,6 +21,7 @@ public class MapVersion extends AbstractEntity {
   private Integer width;
   private Integer height;
   private ComparableVersion version;
+  @ToString.Include
   private String folderName;
   // TODO name consistently with folderName
   private String filename;
@@ -36,6 +37,7 @@ public class MapVersion extends AbstractEntity {
   @Relationship("statistics")
   private MapVersionStatistics statistics;
 
+  @Deprecated
   @Nullable
   @Relationship("ladder1v1Map")
   private Ladder1v1Map ladder1v1Map;

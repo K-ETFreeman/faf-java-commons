@@ -8,9 +8,11 @@ import lombok.ToString;
 
 @Data
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
-@Type("gameReviewsSummary")
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
-public class GameReviewsSummary extends ReviewsSummary {
-  @Relationship("game")
-  private Game game;
+@Type("mapReviewsSummary")
+public class MapReviewsSummary extends ReviewsSummary {
+
+  @Relationship("Map")
+  @ToString.Include
+  private Map map;
 }

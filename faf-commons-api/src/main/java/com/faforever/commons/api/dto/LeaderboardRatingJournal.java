@@ -1,6 +1,5 @@
 package com.faforever.commons.api.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.Data;
@@ -10,18 +9,18 @@ import lombok.ToString;
 @Data
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
-@Type("matchmakerQueueMapPool")
-public class MatchmakerQueueMapPool extends AbstractEntity {
-  @ToString.Include
-  private Double minRating;
-  @ToString.Include
-  private Double maxRating;
+@Type("leaderboardRatingJournal")
+public class LeaderboardRatingJournal extends AbstractEntity{
+  private Double meanAfter;
+  private Double deviationAfter;
+  private Double meanBefore;
+  private Double deviationBefore;
 
-  @Relationship("matchmakerQueue")
+  @Relationship("gamePlayerStats")
   @ToString.Include
-  private MatchmakerQueue matchmakerQueue;
+  private GamePlayerStats gamePlayerStats;
 
-  @Relationship("mapPool")
-  @JsonIgnore
-  private MapPool mapPool;
+  @Relationship("leaderboard")
+  @ToString.Include
+  private Leaderboard leaderboard;
 }

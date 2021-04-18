@@ -2,23 +2,24 @@ package com.faforever.commons.api.dto;
 
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.ToString;
 
-@Getter
-@Setter
-@EqualsAndHashCode(callSuper = true)
+@Data
+@ToString(onlyExplicitlyIncluded = true, callSuper = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("matchmakerQueue")
 public class MatchmakerQueue extends AbstractEntity {
+  @ToString.Include
+  private String technicalName;
+  @ToString.Include
+  private String nameKey;
 
-    private String technicalName;
-    private String nameKey;
+  @Relationship("featuredMod")
+  private FeaturedMod featuredMod;
 
-    @Relationship("featuredMod")
-    private FeaturedMod featuredMod;
-
-    @Relationship("leaderboard")
-    private Leaderboard leaderboard;
-
+  @Relationship("leaderboard")
+  @ToString.Include
+  private Leaderboard leaderboard;
 }

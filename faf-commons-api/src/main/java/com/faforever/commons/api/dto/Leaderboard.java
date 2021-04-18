@@ -1,18 +1,18 @@
 package com.faforever.commons.api.dto;
 
 import com.github.jasminb.jsonapi.annotations.Type;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.ToString;
 
-@Getter
-@Setter
-@EqualsAndHashCode(callSuper = true)
+@Data
+@ToString(onlyExplicitlyIncluded = true, callSuper = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("leaderboard")
 public class Leaderboard extends AbstractEntity {
-
-    private String technical_name;
-    private String name_key;
-    private String description_key;
-
+  @ToString.Include
+  private String technicalName;
+  @ToString.Include
+  private String nameKey;
+  private String descriptionKey;
 }

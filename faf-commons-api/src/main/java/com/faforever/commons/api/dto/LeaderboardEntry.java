@@ -6,28 +6,24 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-import java.util.List;
-
 @Data
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
-@Type("mod")
-public class Mod extends AbstractEntity {
+@Type("leaderboardRating")
+public class LeaderboardEntry extends AbstractEntity {
   @ToString.Include
-  private String displayName;
+  private Double mean;
   @ToString.Include
-  private String author;
+  private Double deviation;
+  private Integer totalGames;
+  private Integer wonGames;
+  private Double rating;
 
-  @Relationship("uploader")
+  @Relationship("player")
   @ToString.Include
-  private Player uploader;
+  private Player player;
 
-  @Relationship("versions")
-  private List<ModVersion> versions;
-
-  @Relationship("latestVersion")
-  private ModVersion latestVersion;
-
-  @Relationship("reviewsSummary")
-  private ModReviewsSummary modReviewsSummary;
+  @Relationship("leaderboard")
+  @ToString.Include
+  private Leaderboard leaderboard;
 }
