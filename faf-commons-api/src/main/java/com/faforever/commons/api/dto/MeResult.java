@@ -18,6 +18,7 @@ public class MeResult implements ElideEntity {
   public static final String TYPE_NAME = "me";
 
   @Id
+  private String id;
   @ToString.Include
   @EqualsAndHashCode.Include
   private String userId;
