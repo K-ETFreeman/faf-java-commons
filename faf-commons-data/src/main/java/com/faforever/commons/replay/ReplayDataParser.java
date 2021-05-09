@@ -1,11 +1,17 @@
 package com.faforever.commons.replay;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.LittleEndianDataInputStream;
 import lombok.Data;
-import lombok.SneakyThrows;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorInputStream;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
+import org.apache.commons.compress.utils.IOUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -14,10 +20,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,9 +40,23 @@ public class ReplayDataParser {
   private static final int LUA_TABLE_START = 4;
   private static final int LUA_TABLE_END = 5;
   private final Path path;
+  private final ObjectMapper objectMapper;
+  @Getter
+  private ReplayMetadata metadata;
+  @Getter
+  private String replayPatchFieldId;
+  @Getter
+  private byte[] data;
+  @Getter
+  private String map;
+  @Getter
+  private Map<String, Map<String, ?>> mods;
+  @Getter
   private Map<Integer, Map<String, Object>> armies;
   private int randomSeed;
+  @Getter
   private List<ChatMessage> chatMessages;
+  @Getter
   private Map<Integer, Map<Integer, AtomicInteger>> commandsPerMinuteByPlayer;
   private float x;
   private float y;
@@ -44,23 +64,26 @@ public class ReplayDataParser {
   private float w;
   private float scale;
   private int ticks;
+  @Getter
   private List<GameOption> gameOptions;
 
-  public ReplayDataParser(Path path) {
+  public ReplayDataParser(Path path, ObjectMapper objectMapper) throws IOException, CompressorException {
     this.path = path;
+    this.objectMapper = objectMapper;
     armies = new HashMap<>();
     chatMessages = new ArrayList<>();
     commandsPerMinuteByPlayer = new HashMap<>();
+    parse();
   }
 
   @VisibleForTesting
-  String readString(LittleEndianDataInputStream dataStream) throws IOException {
+  static String readString(LittleEndianDataInputStream dataStream) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     byte tempByte;
-    while ((tempByte =  dataStream.readByte()) != 0) {
+    while ((tempByte = dataStream.readByte()) != 0) {
       out.write(tempByte);
     }
-    return new String(out.toByteArray(), StandardCharsets.UTF_8);
+    return out.toString(StandardCharsets.UTF_8);
   }
 
   private Object parseLua(LittleEndianDataInputStream dataStream) throws IOException {
@@ -99,29 +122,57 @@ public class ReplayDataParser {
     return next;
   }
 
-  // TODO don't duplicate code
-  private byte[] readReplayData(Path replayFile) {
-    try {
-      List<String> lines = Files.readAllLines(replayFile);
-      return QtCompress.qUncompress(BaseEncoding.base64().decode(lines.get(1)));
-    } catch (Exception e) {
-      log.warn("Replay file " + replayFile + " could not be read", e);
-      return null;
+  private void readReplayData(Path replayFile) throws IOException, CompressorException {
+    byte[] allReplayData = Files.readAllBytes(replayFile);
+    int headerEnd = findReplayHeaderEnd(allReplayData);
+    metadata = objectMapper.readValue(new String(Arrays.copyOf(allReplayData, headerEnd), StandardCharsets.UTF_8), ReplayMetadata.class);
+    data = decompress(Arrays.copyOfRange(allReplayData, headerEnd + 1, allReplayData.length), metadata);
+  }
+
+  private int findReplayHeaderEnd(byte[] replayData) {
+    int headerEnd;
+    for (headerEnd = 0; headerEnd < replayData.length; headerEnd++) {
+      if (replayData[headerEnd] == '\n') {
+        return headerEnd;
+      }
+    }
+    throw new IllegalArgumentException("Missing separator between replay header and body");
+  }
+
+  private byte[] decompress(byte[] data, @NotNull ReplayMetadata metadata) throws IOException, CompressorException {
+    CompressionType compressionType = Objects.requireNonNullElse(metadata.getCompression(), CompressionType.QTCOMPRESS);
+
+    switch (compressionType) {
+      case QTCOMPRESS: {
+        return QtCompress.qUncompress(BaseEncoding.base64().decode(new String(data)));
+      }
+      case ZSTD: {
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(data);
+        CompressorInputStream compressorInputStream = new CompressorStreamFactory()
+          .createCompressorInputStream(arrayInputStream);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        IOUtils.copy(compressorInputStream, out);
+        return out.toByteArray();
+      }
+      case UNKNOWN:
+      default:
+        throw new IOException("Unknown replay format in replay file");
     }
   }
 
   @SuppressWarnings("unchecked")
   private void parseHeader(LittleEndianDataInputStream dataStream) throws IOException {
-    String replayPatchFieldId = readString(dataStream);
+    replayPatchFieldId = readString(dataStream);
     dataStream.skipBytes(3);
 
     String[] split = readString(dataStream).split("\\r\\n");
     String replayVersionId = split[0];
-    String map = split[1];
+    map = split[1];
     dataStream.skipBytes(4);
 
     int numberOfMods = dataStream.readInt();
-    Object mods = parseLua(dataStream);
+    mods = (Map<String, Map<String, ?>>) parseLua(dataStream);
 
     int scenarioSize = dataStream.readInt();
     this.gameOptions = ((Map<String, Object>) parseLua(dataStream)).entrySet().stream()
@@ -300,19 +351,18 @@ public class ReplayDataParser {
   }
 
   private void parseGiveResourcesToPlayer(Map<String, Object> lua) {
-    Map<String, Object> map = lua;
-    if (map.containsKey("Msg")) {
-      int fromArmy = ((Number) map.get("From")).intValue() - 1;
+    if (lua.containsKey("Msg") && lua.containsKey("From") && lua.containsKey("Sender")) {
+      int fromArmy = ((Number) lua.get("From")).intValue() - 1;
       if (fromArmy != -2) {
-        Map<String, String> msg = (Map<String, String>) map.get("Msg");
-        String sender = (String) map.get("Sender");
+        Map<String, String> msg = (Map<String, String>) lua.get("Msg");
+        String sender = (String) lua.get("Sender");
         // This can either be a player name or a Map of something, in which case it's actually giving resources
         Object receiver = msg.get("to");
         if (receiver instanceof String) {
           String text = msg.get("text");
 
           Map<String, Object> army = armies.get(fromArmy);
-          if (Objects.equals(army.get("PlayerName"), sender)) {
+          if (army != null && Objects.equals(army.get("PlayerName"), sender)) {
             chatMessages.add(new ChatMessage(tickToTime(ticks), sender, String.valueOf(receiver), text));
           }
         }
@@ -330,19 +380,11 @@ public class ReplayDataParser {
     return bytes;
   }
 
-  @SneakyThrows
-  public ReplayData parse() {
-    byte[] data = readReplayData(path);
-    if (data == null) {
-      // TODO the call above should maybe throw an exception
-      throw new IllegalStateException("Could not read replay data");
-    }
-    try (LittleEndianDataInputStream dataStream = new LittleEndianDataInputStream(new ByteArrayInputStream(data))) {
-      parseHeader(dataStream);
-      parseTicks(dataStream);
-    }
-
-    return new ReplayData(chatMessages, gameOptions);
+  private void parse() throws IOException, CompressorException {
+    readReplayData(path);
+    LittleEndianDataInputStream dataStream = new LittleEndianDataInputStream(new ByteArrayInputStream(data));
+    parseHeader(dataStream);
+    parseTicks(dataStream);
   }
 
 
