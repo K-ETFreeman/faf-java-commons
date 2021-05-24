@@ -13,6 +13,7 @@ import java.util.List;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("mod")
 public class Mod extends AbstractEntity {
+  private boolean recommended;
   @ToString.Include
   private String displayName;
   @ToString.Include
