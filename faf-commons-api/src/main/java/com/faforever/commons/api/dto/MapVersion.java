@@ -35,6 +35,7 @@ public class MapVersion extends AbstractEntity {
   private Map map;
 
   @Relationship("statistics")
+  @Deprecated
   private MapVersionStatistics statistics;
 
   @Deprecated

@@ -24,6 +24,7 @@ public class Map extends AbstractEntity {
   private Player author;
 
   @Relationship("statistics")
+  @Deprecated
   private MapStatistics statistics;
 
   @Relationship("latestVersion")
