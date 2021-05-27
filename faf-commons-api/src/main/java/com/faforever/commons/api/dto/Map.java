@@ -18,6 +18,7 @@ public class Map extends AbstractEntity {
   @ToString.Include
   private String displayName;
   private String mapType;
+  private Integer gamesPlayed;
 
   @Relationship("author")
   @ToString.Include

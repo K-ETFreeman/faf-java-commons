@@ -20,6 +20,7 @@ public class MapVersion extends AbstractEntity {
   private Integer maxPlayers;
   private Integer width;
   private Integer height;
+  private Integer gamesPlayed;
   private ComparableVersion version;
   @ToString.Include
   private String folderName;
