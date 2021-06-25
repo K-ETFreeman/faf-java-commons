@@ -9,8 +9,8 @@ version = "1.0.0-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 dependencies {
-  api("io.projectreactor.netty:reactor-netty:1.0.4")
-  api("io.projectreactor:reactor-tools:3.4.3")
+  implementation("io.projectreactor.netty:reactor-netty:1.0.4")
+  api("io.projectreactor:reactor-core:3.4.3")
   testImplementation("io.projectreactor:reactor-test:3.4.3")
   val jacksonVersion = "2.12.2"
   testImplementation("com.fasterxml.jackson.core:jackson-core:${jacksonVersion}")
