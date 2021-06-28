@@ -34,6 +34,16 @@ public enum Faction {
   private final String string;
 
   @JsonCreator
+  public static Faction fromObject(Object value) {
+    if (value instanceof Integer) {
+      return fromFaValue((Integer) value);
+    } else if (value instanceof String) {
+      return fromString((String) value);
+    } else {
+      return null;
+    }
+  }
+
   public static Faction fromFaValue(int value) {
     return Faction.values()[value - 1];
   }
