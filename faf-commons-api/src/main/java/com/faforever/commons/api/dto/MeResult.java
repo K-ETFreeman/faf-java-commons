@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import java.time.OffsetDateTime;
 import java.util.Set;
 
 @Type(MeResult.TYPE_NAME)
@@ -25,6 +26,7 @@ public class MeResult implements ElideEntity {
   @ToString.Include
   private String userName;
   private String email;
+  private OffsetDateTime lastLogin;
   private Clan clan;
   private Set<String> groups;
   private Set<String> permissions;
