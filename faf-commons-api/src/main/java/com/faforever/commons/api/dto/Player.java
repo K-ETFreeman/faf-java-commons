@@ -44,7 +44,12 @@ public class Player extends AbstractEntity {
   @Relationship("lobbyGroup")
   private LobbyGroup lobbyGroup;
 
+  @Relationship("uniqueIds")
+  @RestrictedVisibility("IsModerator")
+  private Set<UniqueId> uniqueIds;
+
   @Relationship("bans")
+  @RestrictedVisibility("IsModerator")
   private List<BanInfo> bans;
 
   @Relationship("avatarAssignments")
