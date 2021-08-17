@@ -21,7 +21,9 @@ interface MatchmakerApi {
 
   fun kickPlayerFromParty(playerId: Int)
 
-  fun readyParty(isReady: Boolean)
+  fun readyParty()
+
+  fun unreadyParty()
 
   fun leaveParty()
 
@@ -42,6 +44,9 @@ enum class MatchmakerState {
 // *** SERVER MESSAGES ***
 // ***********************
 
+/**
+ * Information on a players party sent after a change
+ */
 data class PartyInfo(
   val owner: Int,
   val members: List<PartyMember>,
@@ -53,6 +58,9 @@ data class PartyInfo(
   )
 }
 
+/**
+ * Information about the matchmakers periodically sent out
+ */
 data class MatchmakerInfo(
   val queues: List<MatchmakerQueue>,
 ) : ServerMessage {
@@ -61,6 +69,8 @@ data class MatchmakerInfo(
     val name: String,
     @JsonProperty("queue_pop_time")
     val popTime: OffsetDateTime,
+    @JsonProperty("queue_pop_time_delta")
+    val secondsUntilPop: Float,
     @JsonProperty("team_size")
     val teamSize: Int,
     @JsonProperty("num_players")
@@ -72,21 +82,26 @@ data class MatchmakerInfo(
   )
 }
 
+/**
+ * Message when a match has been found in a queue
+ */
 data class MatchmakerMatchFoundResponse(
   @JsonProperty("queue_name")
-  val queue: String,
+  val queueName: String,
 ) : ServerMessage
 
+/**
+ * Message when a found match has been cancelled
+ */
 class MatchmakerMatchCancelledResponse : ServerMessage
 
-data class MatchmakingInfo(
-  val state: MatchmakerState,
-) : ServerMessage
-
+/**
+ * Current queue state for the player for the given queue
+ */
 data class SearchInfo(
   @JsonProperty("queue_name")
   val queueName: String,
-  val state: String,
+  val state: MatchmakerState,
 ) : ServerMessage
 
 
@@ -95,47 +110,34 @@ data class SearchInfo(
 // ***********************
 
 internal data class GameMatchmakingRequest(
+  @JsonProperty("queue_name")
   val queueName: String,
   val state: MatchmakerState,
-) : ClientMessage {
-  override val command = "game_matchmaking"
-}
+) : ClientMessage
 
 internal data class InviteToPartyRequest(
-  @JsonProperty("recipientId")
+  @JsonProperty("recipient_id")
   val playerId: Int
-) : ClientMessage {
-  override val command = "invite_to_party"
-}
+) : ClientMessage
 
 internal data class AcceptInviteToPartyRequest(
-  @JsonProperty("senderId")
+  @JsonProperty("sender_id")
   val playerId: Int
-) : ClientMessage {
-  override val command = "accept_party_invite"
-}
+) : ClientMessage
 
 internal data class KickPlayerFromPartyRequest(
-  @JsonProperty("kickedPlayerId")
+  @JsonProperty("kicked_player_id")
   val playerId: Int
-) : ClientMessage {
-  override val command = "kick_player_from_party"
-}
+) : ClientMessage
 
-internal class ReadyPartyRequest(isReady: Boolean) : ClientMessage {
-  override val command = if (isReady) "ready_party" else "unready_party"
-}
+internal class ReadyPartyRequest : ClientMessage
 
-internal class LeavePartyRequest : ClientMessage {
-  override val command = "leave_party"
-}
+internal class UnreadyPartyRequest : ClientMessage
+
+internal class LeavePartyRequest : ClientMessage
 
 internal data class SelectPartyFactionsRequest(
   val factions: Set<Faction>
-) : ClientMessage {
-  override val command = "set_party_factions"
-}
+) : ClientMessage
 
-internal class MatchmakerInfoRequest : ClientMessage {
-  override val command = "matchmaker_info"
-}
+internal class MatchmakerInfoRequest : ClientMessage

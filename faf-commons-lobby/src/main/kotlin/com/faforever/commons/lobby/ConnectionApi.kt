@@ -1,6 +1,9 @@
 package com.faforever.commons.lobby
 
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonValue
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 
 /**
@@ -8,11 +11,11 @@ import reactor.core.publisher.Mono
  */
 interface ConnectionApi {
 
-  fun connectAndLogin(): Mono<LoginSuccessResponse>
+  fun connectAndLogin(config: FafLobbyClient.Config): Mono<LoginSuccessResponse>
 
   fun disconnect()
 
-  fun getIceServers(): Mono<Collection<IceServer>>
+  fun getIceServers(): Flux<IceServer>
 }
 
 class LoginException(reason: String?) : Exception(reason)
@@ -26,6 +29,11 @@ class LoginException(reason: String?) : Exception(reason)
  * Holds no data, just checks if the connection is still alive
  */
 internal class PingMessage : ServerMessage
+
+/**
+ * Holds no data, just checks if the connection is still alive
+ */
+internal class PongMessage : ServerMessage
 
 /**
  * Indicates the previous client message could not be parsed.
@@ -42,15 +50,6 @@ data class NoticeInfo(
   val text: String?,
 ) : ServerMessage
 
-/**
- * The server could inform you that there is a newer version.
- * This was used for older Python implementations. You will probably never encounter it.
- */
-data class UpdateInfo(
-  val update: String?,
-  @JsonProperty("new_version")
-  val newVersion: String?,
-) : ServerMessage
 
 /**
  * The server assigns us a session id, onto which we will authorize.
@@ -60,26 +59,30 @@ internal data class SessionResponse(
   val session: Long,
 ) : ServerMessage
 
+/**
+ * The server confirms a successful login and sends us our player info
+ */
 data class LoginSuccessResponse(
-  val id: Int,
-  val login: String,
   val me: Player,
 ) : ServerMessage
+
+/**
+ * Randomly assigned password to login into the irc
+ */
+data class IrcPasswordInfo(
+  val password: String,
+) : ServerMessage {
+  override fun stringsToMask() = listOf(password)
+}
 
 data class Player(
   val id: Int,
   val login: String,
   val clan: String?,
   val avatar: Avatar?,
-  @JsonProperty("global_rating")
-  val globalRating: List<Float>?,
-  @JsonProperty("ladder_rating")
-  val ladderRating: List<Float>?,
-  @JsonProperty("number_of_games")
-  val numberOfGames: Int,
   val country: String,
   val league: Map<String, String>?,
-  val ratings: Map<String, LeaderboardRating>,
+  val ratings: Map<String, LeaderboardStats>,
 ) {
   data class Avatar(
     val url: String,
@@ -87,11 +90,23 @@ data class Player(
     val description: String,
   )
 
-  data class LeaderboardRating(
+  data class LeaderboardStats(
     @JsonProperty("number_of_games")
-    val numberOfGame: Int,
-    val rating: List<Float>
-  )
+    val numberOfGames: Int,
+    // Two element list, element 1 is mean, element 2 is deviation
+    val rating: LeaderboardRating
+  ) {
+    data class LeaderboardRating(
+      val mean: Float,
+      val deviation: Float,
+    ) {
+      @JsonCreator
+      constructor(list: List<Float>) : this(list[0], list[1])
+
+      @JsonValue
+      fun toListFormat() : List<Float> = listOf(mean, deviation)
+    }
+  }
 }
 
 /**
@@ -110,6 +125,9 @@ data class IceServer(
   val credentialType: String,
 )
 
+/**
+ * List of ice servers from the lobby server
+ */
 data class IceServerListResponse(
   @JsonProperty("ice_servers")
   val iceServers: Collection<IceServer>,
@@ -121,30 +139,29 @@ data class IceServerListResponse(
 // *** CLIENT MESSAGES ***
 // ***********************
 
-internal data class LoginRequest(
-  val login: String,
-  val password: String,
+/**
+ * Authenticate with oauth token
+ */
+internal data class AuthenticateRequest(
+  val token: String,
   val session: Long,
   @JsonProperty("unique_id")
-  val uniqueId: String?,
-  @JsonProperty("local_ip")
-  val localIp: String,
+  val uniqueId: String,
 ) : ClientMessage {
-  override val command = "hello"
+  override fun stringsToMask() = listOf(token, uniqueId)
 }
 
+/**
+ * Request a new session
+ */
 internal data class SessionRequest(
-  val version: String = "1.0",
+  val version: String,
   @JsonProperty("user_agent")
-  val userAgent: String = "downlords-faf-client",
-) : ClientMessage {
-  override val command = "ask_session"
-}
+  val userAgent: String,
+) : ClientMessage
 
 /**
  * Requests a list of ice servers, which will be returned as a [IceServerListResponse]
  */
-internal class IceServerListRequest : ClientMessage {
-  override val command = "ice_servers"
-}
+internal class IceServerListRequest : ClientMessage
 

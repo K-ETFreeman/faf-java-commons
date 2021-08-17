@@ -1,7 +1,9 @@
 package com.faforever.commons.lobby
 
+import com.fasterxml.jackson.annotation.JsonEnumDefaultValue
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonTypeId
 import reactor.core.publisher.Mono
 
 /**
@@ -15,6 +17,9 @@ interface GameApi {
     mod: String,
     visibility: GameVisibility,
     password: String?,
+    ratingMin: Int?,
+    ratingMax: Int?,
+    enforceRatingRange: Boolean
   ): Mono<GameLaunchResponse>
 
   fun requestJoinGame(gameId: Int, password: String?): Mono<GameLaunchResponse>
@@ -71,6 +76,7 @@ enum class GameAccess {
 
 enum class GameType {
   @JsonProperty("unknown")
+  @JsonEnumDefaultValue
   UNKNOWN,
 
   @JsonProperty("custom")
@@ -100,6 +106,7 @@ enum class VictoryCondition {
   SANDBOX,
 
   @JsonProperty("unknown")
+  @JsonEnumDefaultValue
   UNKNOWN
 }
 
@@ -108,11 +115,12 @@ enum class VictoryCondition {
 // ***********************
 
 /**
+ * Info on current game or games.
  * GameInfo comes as single message or as a nested list
  * which makes all fields nullable. Thanks for nothing...
  */
 data class GameInfo(
-  val uid: Long?,
+  val uid: Int?,
   val title: String?,
   val host: String?,
   @JsonProperty("game_type")
@@ -121,7 +129,7 @@ data class GameInfo(
   val maxPlayers: Int?,
   @JsonProperty("num_players")
   val numberOfPlayers: Int?,
-  val visibility: String?,
+  val visibility: GameVisibility?,
   @JsonProperty("password_protected")
   val passwordProtected: Boolean?,
   val state: GameStatus?,
@@ -148,6 +156,9 @@ data class GameInfo(
   val games: List<GameInfo>?,
 ) : ServerMessage
 
+/**
+ * Message from server containing necessary info to launch a multiplayer game
+ */
 data class GameLaunchResponse(
   val uid: Int,
   val name: String,
@@ -160,7 +171,7 @@ data class GameLaunchResponse(
    */
   @JsonProperty("rating_type")
   val leaderboard: String,
-  val args: List<Any>,
+  val args: List<String>,
 
   @JsonProperty("mapname")
   val mapName: String? = null,
@@ -179,34 +190,110 @@ data class GameLaunchResponse(
  * You will also notice, that the command uses camel case, where the rest of the protocol uses snake case.
  */
 interface GpgGameInboundMessage : ServerMessage {
-  val target: String
+  val target: MessageTarget
   val args: List<Any>
+
+  fun getArgAsInt(index: Int): Int {
+    return (args[index] as Number).toInt()
+  }
+
+  fun getArgAsBoolean(index: Int): Boolean {
+    return args[index] as Boolean
+  }
+
+  fun getArgAsString(index: Int): String {
+    return args[index] as String
+  }
+
+  fun <T> getArgAsObject(index: Int): T {
+    return args[index] as T
+  }
 }
 
 data class HostGameGpgCommand(
-  override val target: String,
+  override val target: MessageTarget = MessageTarget.GAME,
   override val args: List<Any>,
-) : GpgGameInboundMessage
+) : GpgGameInboundMessage {
+  companion object {
+    private const val MAP_INDEX = 0
+  }
+
+  fun getMap(): String {
+    return getArgAsString(MAP_INDEX)
+  }
+}
 
 data class JoinGameGpgCommand(
-  override val target: String,
+  override val target: MessageTarget = MessageTarget.GAME,
   override val args: List<Any>,
-) : GpgGameInboundMessage
+) : GpgGameInboundMessage {
+  companion object {
+    private const val USERNAME_INDEX = 0
+    private const val PEER_UID_INDEX = 1
+  }
+
+  fun getUsername(): String {
+    return getArgAsString(USERNAME_INDEX)
+  }
+
+  fun getPeerUid(): Int {
+    return getArgAsInt(PEER_UID_INDEX)
+  }
+}
 
 data class ConnectToPeerGpgCommand(
-  override val target: String,
+  override val target: MessageTarget = MessageTarget.GAME,
   override val args: List<Any>,
-) : GpgGameInboundMessage
+) : GpgGameInboundMessage {
+  companion object {
+    private const val USERNAME_INDEX = 0
+    private const val PEER_UID_INDEX = 1
+    private const val OFFER_INDEX = 2
+  }
+
+  fun getUsername(): String {
+    return getArgAsString(USERNAME_INDEX)
+  }
+
+  fun getPeerUid(): Int {
+    return getArgAsInt(PEER_UID_INDEX)
+  }
+
+  fun isOffer(): Boolean {
+    return getArgAsBoolean(OFFER_INDEX)
+  }
+}
 
 data class IceMsgGpgCommand(
-  override val target: String,
+  override val target: MessageTarget = MessageTarget.GAME,
   override val args: List<Any>,
-) : GpgGameInboundMessage
+) : GpgGameInboundMessage {
+  companion object {
+    private const val SENDER_INDEX = 0
+    private const val RECORD_INDEX = 1
+  }
+
+  fun getSender(): Int {
+    return getArgAsInt(SENDER_INDEX)
+  }
+
+  fun getRecord(): Any {
+    return getArgAsObject(RECORD_INDEX)
+  }
+}
 
 data class DisconnectFromPeerGpgCommand(
-  override val target: String,
+  override val target: MessageTarget = MessageTarget.GAME,
   override val args: List<Any>,
-) : GpgGameInboundMessage
+) : GpgGameInboundMessage {
+  companion object {
+    private const val UID_INDEX = 0
+  }
+
+  fun getUid(): Int {
+    return getArgAsInt(UID_INDEX)
+  }
+}
 
 
 // ***********************
@@ -223,24 +310,24 @@ internal data class HostGameRequest(
   val version: Int,
   val password: String?,
   val visibility: GameVisibility,
-) : ClientMessage {
-  override val command = "game_host"
-}
+  @JsonProperty("rating_min")
+  val ratingMin: Int?,
+  @JsonProperty("rating_max")
+  val ratingMax: Int?,
+  @JsonProperty("enforce_rating_range")
+  val enforceRatingRange: Boolean,
+) : ClientMessage
 
 internal data class JoinGameRequest(
   @JsonProperty("uid")
   val gameId: Int,
   val password: String?
-) : ClientMessage {
-  override val command = "game_join"
-}
+) : ClientMessage
 
 internal data class RestoreGameSessionRequest(
   @JsonProperty("game_id")
   val gameId: Int,
-) : ClientMessage {
-  override val command = "restore_game_session"
-}
+) : ClientMessage
 
 /**
  * Gpg outbound messages are message sent from the local running game itself and will be sent via ICE to others.
@@ -248,8 +335,29 @@ internal data class RestoreGameSessionRequest(
  * You will also notice, that the command uses camel case, where the rest of the protocol uses snake case.
  */
 data class GpgGameOutboundMessage(
-  override val command: String,
-  val args: List<Any>,
+  @JsonTypeId
+  val command: String,
+  val args: List<Any> = listOf(),
+  val target: MessageTarget = MessageTarget.GAME,
 ) : ClientMessage {
-  val target = "game"
+  companion object {
+    fun disconnectedMessage() = GpgGameOutboundMessage("Disconnected")
+    fun connectedMessage() = GpgGameOutboundMessage("Connected")
+    fun gameStateMessage(state: String) = GpgGameOutboundMessage("GameState", listOf(state))
+    fun gameOptionMessage() = GpgGameOutboundMessage("GameOption")
+    fun gameModsMessage() = GpgGameOutboundMessage("GameMods")
+    fun playerOptionMessage() = GpgGameOutboundMessage("PlayerOption")
+    fun disconnectFromPeerMessage() = GpgGameOutboundMessage("DisconnectFromPeer")
+    fun chatMessage() = GpgGameOutboundMessage("Chat")
+    fun gameResultMessage() = GpgGameOutboundMessage("GameResult")
+    fun statsMessage() = GpgGameOutboundMessage("Stats")
+    fun clearSlotsMessage() = GpgGameOutboundMessage("ClearSlots")
+    fun aiOptionMessage() = GpgGameOutboundMessage("AIOption")
+    fun jsonStatsMessage() = GpgGameOutboundMessage("JsonStats")
+    fun rehostMessage() = GpgGameOutboundMessage("Rehost")
+    fun desyncMessage() = GpgGameOutboundMessage("Desync")
+    fun gameFullMessage() = GpgGameOutboundMessage("GameFull")
+    fun iceMessage(remotePlayerId: Int, message: Any) = GpgGameOutboundMessage("IceMsg", listOf(remotePlayerId, message))
+    fun connectedToHostMessage() = GpgGameOutboundMessage("ConnectedToHost")
+  }
 }

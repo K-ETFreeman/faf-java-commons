@@ -7,28 +7,32 @@ import io.netty.handler.codec.string.LineEncoder
 import io.netty.handler.codec.string.LineSeparator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import reactor.core.Disposable
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.Sinks
 import reactor.netty.Connection
 import reactor.netty.tcp.TcpClient
+import java.net.InetSocketAddress
 import java.util.function.Function
 
 
 class FafLobbyClient(
-  private val config: Config,
   private val mapper: ObjectMapper,
 ) : FafLobbyApi {
   companion object {
-    val log: Logger = LoggerFactory.getLogger(FafLobbyApi::class.java)
+    val LOG: Logger = LoggerFactory.getLogger(FafLobbyApi::class.java)
   }
 
+  private lateinit var config: Config
+  private lateinit var outboundSink: Sinks.Many<ClientMessage>
+  private var connection: Connection? = null
+
   data class Config(
+    val token: String,
+    val version: String,
+    val userAgent: String,
     val host: String,
     val port: Int,
-    val username: String,
-    val password: String,
-    val localIp: String,
     val generateUid: Function<Long, String>,
     val bufferSize: Int,
     val wiretap: Boolean = false,
@@ -39,61 +43,95 @@ class FafLobbyClient(
 
   override val events = eventSink.asFlux().filter {
     it !is PingMessage &&
+      it !is PongMessage &&
       it !is SessionResponse &&
       it !is LoginSuccessResponse &&
       it !is LoginFailedResponse
   }
 
-  private val outboundSink: Sinks.Many<String> = Sinks.many().unicast().onBackpressureBuffer()
-  private val connectionMono: Mono<out Connection> = TcpClient.create(
-  )
-    .wiretap(config.wiretap)
-    .host(config.host)
-    .port(config.port)
-    .doOnConnected { connection ->
-      connection
-        .addHandler(LineEncoder(LineSeparator.UNIX)) // TODO: This is not working. Raise a bug ticket! Workaround below
+  private val client = TcpClient.create()
+    .doOnResolveError { connection, throwable ->
+      LOG.error("Could not connect to server", throwable)
+      connection.dispose()
+    }
+    .doOnConnected {
+      val address = it.channel().remoteAddress() as InetSocketAddress
+      LOG.info("Connected to {} on port {}", address.hostName, address.port)
+      it.addHandler(LineEncoder(LineSeparator.UNIX)) // TODO: This is not working. Raise a bug ticket! Workaround below
         .addHandler(LineBasedFrameDecoder(config.bufferSize))
     }
-    .handle { inbound, outbound ->
-      val inboundMono = inbound.receive()
-        .asString(Charsets.UTF_8)
-        .doOnNext { log.debug("Inbound message: {}", it) }
-        .map { mapper.readValue(it, ServerMessage::class.java) }
-        .flatMap { handle(it) }
-        .onErrorResume {
-          log.error("Error during read", it)
-          // Show must go on!
-          Mono.empty()
-        }
-        .doOnComplete { log.info("Inbound channel closed") }
-        .doFinally { log.info("Inbound channel finally") }
-        .then()
-
-      val outboundMono = outbound.send(
-        outboundSink.asFlux()
-          .doOnNext { log.debug("Outbound message: {}", it) }
-          .onErrorResume {
-            log.error("Error during write", it)
-            // Show must go on!
-            Mono.empty()
-          }
-          .doOnComplete { log.error("Outbound channel closed") }
-          .doFinally { log.info("Outbound channel finally") }
-          // appending line ending is workaround due to broken encoder
-          .map { message -> Unpooled.copiedBuffer(message + "\n", Charsets.UTF_8) }
-      ).then()
-
-      inboundMono.mergeWith(outboundMono)
+    .doOnDisconnected {
+      LOG.info("Disconnected from server")
+      it.dispose()
     }
-    .connect()
 
-  private var connectionSubscription: Disposable? = null
+  private fun openConnection(): Mono<out Connection> {
+    outboundSink = Sinks.many().unicast().onBackpressureBuffer()
+    return client
+      .wiretap(config.wiretap)
+      .host(config.host)
+      .port(config.port)
+      .handle { inbound, outbound ->
+        val inboundMono = inbound.receive()
+          .asString(Charsets.UTF_8)
+          .doOnError { LOG.error("Inbound channel closed with error", it) }
+          .doOnComplete { LOG.info("Inbound channel closed") }
+          .doOnCancel { LOG.info("Inbound channel cancelled") }
+          .flatMap {
+            Mono.fromCallable {
+              val serverMessage = mapper.readValue(it, ServerMessage::class.java)
+              var logMessage = it
+              for (string in serverMessage.stringsToMask()) {
+                logMessage = logMessage.replace(string, LobbyProtocolMessage.CONFIDENTIAL_MASK)
+              }
+              LOG.debug("Inbound message: {}", logMessage)
+              serverMessage
+            }.onErrorResume { throwable ->
+              LOG.error("Error during deserialization of message {}", it, throwable)
+              Mono.empty()
+            }
+          }
+          .flatMap { message ->
+            handle(message)
+              .onErrorResume {
+                LOG.error("Error during handling of message {}", message, it)
+                Mono.empty()
+              }
+          }
+          .then()
 
-  override fun connectAndLogin() =
-    Mono.fromCallable {
-      connectionSubscription = connectionMono.subscribe()
-      send(SessionRequest())
+        val outboundMono = outbound.sendString(
+          outboundSink.asFlux()
+            .doOnError { LOG.error("Outbound channel closed with error", it) }
+            .doOnComplete { LOG.info("Outbound channel closed") }
+            .doOnCancel { LOG.info("Outbound channel cancelled") }
+            // appending line ending is workaround due to broken encoder
+            .flatMap {
+              Mono.fromCallable {
+                val jsonMessage = mapper.writeValueAsString(it)
+                var logMessage = jsonMessage
+                for (string in it.stringsToMask()) {
+                  logMessage = logMessage.replace(string, LobbyProtocolMessage.CONFIDENTIAL_MASK)
+                }
+                LOG.debug("Outbound message: {}", logMessage)
+                jsonMessage + "\n"
+              }.onErrorResume { throwable ->
+                LOG.error("Error during serialization of message {}", it, throwable)
+                Mono.empty()
+              }
+            }
+        ).then()
+
+        inboundMono.mergeWith(outboundMono)
+      }
+      .connect()
+  }
+
+  override fun connectAndLogin(config: Config): Mono<LoginSuccessResponse>{
+    this.config = config
+    return Mono.fromCallable {
+      openConnection().subscribe({connection = it}, {LOG.error("Error during connection", it)})
+      send(SessionRequest(config.version, config.userAgent))
     }.then(
       rawEvents
         .flatMap {
@@ -106,11 +144,35 @@ class FafLobbyClient(
         .cast(LoginSuccessResponse::class.java)
         .next()
     )
+  }
 
   override fun disconnect() {
-    when (val subscription = connectionSubscription) {
-      null -> log.warn("Attempting to disconnect while never connected")
-      else -> subscription.dispose().also { log.info("Disconnecting") }
+    when (val conn = connection) {
+      null -> LOG.warn("Attempting to disconnect while never connected")
+      else -> LOG.info("Disconnecting from server").also {
+        outboundSink.tryEmitComplete()
+        conn.dispose()
+      }
+    }
+  }
+
+  private fun send(message: ClientMessage) {
+    outboundSink.tryEmitNext(message)
+  }
+
+  private fun handle(message: ServerMessage): Mono<Unit> = when (message) {
+    is SessionResponse -> Mono.fromCallable {
+      send(
+        AuthenticateRequest(
+          config.token,
+          message.session,
+          config.generateUid.apply(message.session),
+        )
+      )
+    }
+    else -> Mono.fromCallable {
+      eventSink.tryEmitNext(message)
+      Unit
     }
   }
 
@@ -126,6 +188,9 @@ class FafLobbyClient(
     mod: String,
     visibility: GameVisibility,
     password: String?,
+    ratingMin: Int?,
+    ratingMax: Int?,
+    enforceRatingRange: Boolean
   ): Mono<GameLaunchResponse> =
     Mono.fromCallable {
       send(
@@ -138,6 +203,9 @@ class FafLobbyClient(
           0,
           password,
           visibility,
+          ratingMin,
+          ratingMax,
+          enforceRatingRange,
         )
       )
     }.then(
@@ -159,39 +227,15 @@ class FafLobbyClient(
 
   override fun restoreGameSession(gameId: Int) = send(RestoreGameSessionRequest(gameId))
 
-  override fun getIceServers(): Mono<Collection<IceServer>> =
+  override fun getIceServers(): Flux<IceServer> =
     Mono.fromCallable { send(IceServerListRequest()) }
-      .then(
+      .thenMany {
         events
           .filter { it is IceServerListResponse }
           .cast(IceServerListResponse::class.java)
           .next()
-          .map { it.iceServers }
-      )
-
-  private fun send(message: ClientMessage) {
-    outboundSink.tryEmitNext(mapper.writeValueAsString(message))
-  }
-
-  private fun handle(message: ServerMessage): Mono<Unit> = when (message) {
-    is SessionResponse -> Mono.fromCallable {
-      send(
-        LoginRequest(
-          config.username,
-          config.password,
-          message.session,
-          config.localIp,
-          config.generateUid.apply(message.session),
-        )
-      )
-      eventSink.tryEmitNext(message)
-      Unit
-    }
-    else -> Mono.fromCallable {
-      eventSink.tryEmitNext(message)
-      Unit
-    }
-  }
+          .flatMapIterable { it.iceServers }
+      }
 
   override fun addFriend(playerId: Int) = send(AddFriendRequest(playerId))
 
@@ -200,6 +244,17 @@ class FafLobbyClient(
   override fun removeFriend(playerId: Int) = send(RemoveFriendRequest(playerId))
 
   override fun removeFoe(playerId: Int) = send(RemoveFoeRequest(playerId))
+
+  override fun selectAvatar(url: String?) = send(SelectAvatarRequest(url))
+
+  override fun getAvailableAvatars(): Flux<Player.Avatar> = Mono.fromCallable { send(AvatarListRequest()) }
+    .thenMany {
+      events
+        .filter { it is AvatarListInfo }
+        .cast(AvatarListInfo::class.java)
+        .next()
+        .flatMapIterable { it.avatarList }
+    }
 
   override fun requestMatchmakerInfo() = send(MatchmakerInfoRequest())
 
@@ -212,7 +267,9 @@ class FafLobbyClient(
 
   override fun kickPlayerFromParty(playerId: Int) = send(KickPlayerFromPartyRequest(playerId))
 
-  override fun readyParty(isReady: Boolean) = send(ReadyPartyRequest(isReady))
+  override fun readyParty() = send(ReadyPartyRequest())
+
+  override fun unreadyParty() = send(UnreadyPartyRequest())
 
   override fun leaveParty() = send(LeavePartyRequest())
 

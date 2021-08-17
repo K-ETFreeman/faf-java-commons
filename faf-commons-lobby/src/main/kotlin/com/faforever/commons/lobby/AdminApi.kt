@@ -14,7 +14,6 @@ interface AdminApi {
   fun closePlayerGame(playerId: Int)
 
   fun closePlayerLobby(playerId: Int)
-
 }
 
 
@@ -22,20 +21,21 @@ interface AdminApi {
 // *** CLIENT MESSAGES ***
 // ***********************
 
+interface AdminRequest : ClientMessage {
+  val action: String
+}
+
 internal data class BroadcastRequest(
   val message: String,
-) : ClientMessage {
-  override val command = "broadcast"
-}
+  override val action: String = "broadcast"
+) : AdminRequest
 
 internal data class ClosePlayerGameRequest(
   @JsonProperty("user_id") val playerId: Int,
-) : ClientMessage {
-  override val command = "closeFA"
-}
+  override val action: String = "closeFA"
+) : AdminRequest
 
 internal data class ClosePlayerLobbyRequest(
   @JsonProperty("user_id") val playerId: Int,
-) : ClientMessage {
-  override val command = "closelobby"
-}
+  override val action: String = "closelobby"
+) : AdminRequest
