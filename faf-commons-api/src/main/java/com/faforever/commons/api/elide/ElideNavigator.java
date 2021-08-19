@@ -32,6 +32,7 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
   private Optional<Condition<?>> filterCondition = Optional.empty();
   private Optional<Integer> pageSize = Optional.empty();
   private Optional<Integer> pageNumber = Optional.empty();
+  private Optional<Boolean> pageTotals = Optional.empty();
 
   private ElideNavigator(@NotNull Class<T> dtoClass) {
     this.dtoClass = dtoClass;
@@ -129,7 +130,7 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
   @Override
   public ElideNavigatorOnCollection<T> addSortingRule(@NotNull String field, boolean ascending) {
     log.trace("{} sort added: {}", ascending ? "ascending" : "descending", field);
-    sorts.add((ascending ? "+" : "-") + field);
+    sorts.add((ascending ? "" : "-") + field);
     return this;
   }
 
@@ -139,7 +140,7 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
    */
   @Override
   public ElideNavigatorOnCollection<T> addFilter(@NotNull Condition<?> eq) {
-    log.trace("filter set: {}", eq.toString());
+    log.trace("filter set: {}", eq);
     filterCondition = Optional.of(eq);
     return this;
   }
@@ -155,6 +156,13 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
   public ElideNavigatorOnCollection<T> pageNumber(int number) {
     log.trace("page number set: {}", number);
     pageNumber = Optional.of(number);
+    return this;
+  }
+
+  @Override
+  public ElideNavigatorOnCollection<T> pageTotals(boolean showTotals) {
+    log.trace("page totals set: {}", showTotals);
+    pageTotals = Optional.of(showTotals);
     return this;
   }
 
@@ -178,18 +186,22 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
     filterCondition.ifPresent(cond -> queryArgs.add(String.format("filter=%s", cond.query(new RSQLVisitor()))));
 
     if (sorts.size() > 0) {
-      queryArgs.add(String.format("sort=%s", sorts.stream()
-        .collect(Collectors.joining(","))));
+      queryArgs.add(String.format("sort=%s", String.join(",", sorts)));
     }
 
     pageSize.ifPresent(i -> queryArgs.add(String.format("page[size]=%s", i)));
     pageNumber.ifPresent(i -> queryArgs.add(String.format("page[number]=%s", i)));
+    pageTotals.ifPresent(show -> {
+      if (show) {
+        queryArgs.add("page[totals]");
+      }
+    });
 
     String route = parentNavigator.map(ElideNavigator::build)
       .orElse("/data/" + dtoPath) +
       id.map(i -> "/" + i).orElse("") +
       relationship.map(r -> "/" + r).orElse("") +
-      queryArgs.toString();
+      queryArgs;
     log.debug("Route built: {}", route);
     return route;
   }

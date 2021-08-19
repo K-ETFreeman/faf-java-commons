@@ -1,6 +1,7 @@
 package com.faforever.commons.api.elide;
 
 import com.faforever.commons.api.dto.Ladder1v1Map;
+import com.faforever.commons.api.dto.MapPoolAssignment;
 import com.faforever.commons.api.dto.MapVersion;
 import org.junit.jupiter.api.Test;
 
@@ -80,11 +81,11 @@ class ElideNavigatorTest {
 
   @Test
   void testGetListSorted() {
-    assertThat(ElideNavigator.of(Ladder1v1Map.class)
+    assertThat(ElideNavigator.of(MapPoolAssignment.class)
       .collection()
       .addSortingRule("sortCritASC", true)
       .addSortingRule("sortCritDESC", false)
-      .build(), is("/data/ladder1v1Map?sort=+sortCritASC,-sortCritDESC"));
+      .build(), is("/data/mapPoolAssignment?sort=sortCritASC,-sortCritDESC"));
   }
 
   @Test
@@ -95,4 +96,15 @@ class ElideNavigatorTest {
       .id("1234")
       .build(), is("/data/ladder1v1Map/5/mapVersion/1234"));
   }
+
+  @Test
+  void testGetListPages() {
+    assertThat(ElideNavigator.of(MapPoolAssignment.class)
+      .collection()
+      .pageSize(1)
+      .pageNumber(1)
+      .pageTotals(true)
+      .build(), is("/data/mapPoolAssignment?page[size]=1&page[number]=1&page[totals]"));
+  }
+
 }

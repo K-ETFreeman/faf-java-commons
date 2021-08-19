@@ -14,6 +14,8 @@ public interface ElideNavigatorOnCollection<T extends ElideEntity> {
 
   ElideNavigatorOnCollection<T> pageNumber(int number);
 
+  ElideNavigatorOnCollection<T> pageTotals(boolean showTotals);
+
   Class<T> getDtoClass();
 
   String build();
