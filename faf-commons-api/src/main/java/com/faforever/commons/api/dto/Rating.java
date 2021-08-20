@@ -12,6 +12,7 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
+@Deprecated
 public class Rating {
   @Id
   @ToString.Include

@@ -1,5 +1,6 @@
 package com.faforever.commons.api.dto;
 
+import com.faforever.commons.api.elide.ElideEntity;
 import com.github.jasminb.jsonapi.annotations.Id;
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
@@ -13,7 +14,7 @@ import java.time.Duration;
 @ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Type("coopResult")
-public class CoopResult {
+public class CoopResult implements ElideEntity {
   @Id
   @ToString.Include
   @EqualsAndHashCode.Include

@@ -1,5 +1,6 @@
 package com.faforever.commons.api.dto;
 
+import com.faforever.commons.api.elide.ElideEntity;
 import com.github.jasminb.jsonapi.annotations.Id;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -8,7 +9,7 @@ import lombok.ToString;
 @Data
 @ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class ReviewsSummary {
+public class ReviewsSummary implements ElideEntity {
   @Id
   @ToString.Include
   @EqualsAndHashCode.Include

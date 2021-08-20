@@ -1,5 +1,6 @@
 package com.faforever.commons.api.dto;
 
+import com.faforever.commons.api.elide.ElideEntity;
 import com.github.jasminb.jsonapi.annotations.Id;
 import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.Data;
@@ -10,7 +11,7 @@ import lombok.ToString;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(onlyExplicitlyIncluded = true)
 @Type("featuredModFile")
-public class FeaturedModFile {
+public class FeaturedModFile implements ElideEntity {
   @Id
   @ToString.Include
   @EqualsAndHashCode.Include
