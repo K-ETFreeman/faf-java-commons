@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 
+@SuppressWarnings("unused")
 @Slf4j
 public class ReplayDataParser {
 
@@ -221,131 +222,135 @@ public class ReplayDataParser {
     int commandId;
     while (dataStream.available() > 0) {
       commandId = dataStream.readUnsignedByte();
-      Command command = Command.values()[commandId];
       int messageLength = dataStream.readUnsignedShort();
-
-      switch (command) {
-        case CMDST_ADVANCE:
-          ticks += dataStream.readInt();
-          break;
-
-        case CMDST_SET_COMMAND_SOURCE:
-          player = dataStream.readUnsignedByte();
-          break;
-
-        case CMDST_COMMAND_SOURCE_TERMINATED:
-          lastTicks.put(player, ticks);
-          break;
-
-        case CMDST_VERIFY_CHECKSUM:
-          if (desync) {
+      try {
+        Command command = Command.values()[commandId];
+        switch (command) {
+          case CMDST_ADVANCE:
+            ticks += dataStream.readInt();
             break;
-          }
-          byte[] checksum = readCheckSum(dataStream);
-          int tickNum = dataStream.readInt();
 
-          desync = tickNum == previousTick && !Arrays.equals(previousChecksum, checksum);
+          case CMDST_SET_COMMAND_SOURCE:
+            player = dataStream.readUnsignedByte();
+            break;
 
-          previousChecksum = checksum;
-          previousTick = ticks;
-          break;
+          case CMDST_COMMAND_SOURCE_TERMINATED:
+            lastTicks.put(player, ticks);
+            break;
 
-        case CMDST_SET_COMMAND_TARGET:
-          dataStream.skipBytes(4);
-          StiTarget stiTarget = StiTarget.values()[dataStream.readUnsignedByte()];
-          switch (stiTarget) {
-            case ENTITY:
-              int entityId = dataStream.readInt();
+          case CMDST_VERIFY_CHECKSUM:
+            if (desync) {
               break;
-            case POSITION:
-              float x = dataStream.readFloat();
-              float y = dataStream.readFloat();
-              float z = dataStream.readFloat();
-              break;
-          }
-          break;
+            }
+            byte[] checksum = readCheckSum(dataStream);
+            int tickNum = dataStream.readInt();
 
-        case CMDST_PROCESS_INFO_PAIR:
-          dataStream.readInt();
-          readString(dataStream);
-          readString(dataStream);
-          break;
+            desync = tickNum == previousTick && !Arrays.equals(previousChecksum, checksum);
 
-        case CMDST_LUA_SIM_CALLBACK:
-          String functionName = readString(dataStream);
-          Object lua = parseLua(dataStream);
+            previousChecksum = checksum;
+            previousTick = ticks;
+            break;
 
-          if (Objects.equals("GiveResourcesToPlayer", functionName)) {
-            parseGiveResourcesToPlayer((Map<String, Object>) lua);
-          }
+          case CMDST_SET_COMMAND_TARGET:
+            dataStream.skipBytes(4);
+            StiTarget stiTarget = StiTarget.values()[dataStream.readUnsignedByte()];
+            switch (stiTarget) {
+              case ENTITY:
+                int entityId = dataStream.readInt();
+                break;
+              case POSITION:
+                float x = dataStream.readFloat();
+                float y = dataStream.readFloat();
+                float z = dataStream.readFloat();
+                break;
+            }
+            break;
 
-          // No idea what this skips
-          if (lua != null) {
-            dataStream.skipBytes(4 * dataStream.readInt());
-          } else {
-            dataStream.skipBytes(4 + 3);
-          }
-          break;
+          case CMDST_PROCESS_INFO_PAIR:
+            dataStream.readInt();
+            readString(dataStream);
+            readString(dataStream);
+            break;
 
-        case CMDST_ISSUE_COMMAND:
-        case CMDST_ISSUE_FACTORY_COMMAND:
-          commandsPerMinuteByPlayer
-            .computeIfAbsent(player, p -> new HashMap<>())
-            .computeIfAbsent(ticks, t -> new AtomicInteger())
-            .incrementAndGet();
+          case CMDST_LUA_SIM_CALLBACK:
+            String functionName = readString(dataStream);
+            Object lua = parseLua(dataStream);
 
-          int unitNums = dataStream.readInt();
-          dataStream.skipBytes(unitNums * 4);
+            if (Objects.equals("GiveResourcesToPlayer", functionName)) {
+              parseGiveResourcesToPlayer((Map<String, Object>) lua);
+            }
 
-          dataStream.skipBytes(8);
-          int commandType = dataStream.readUnsignedByte();
-          dataStream.skipBytes(4);
+            // No idea what this skips
+            if (lua != null) {
+              dataStream.skipBytes(4 * dataStream.readInt());
+            } else {
+              dataStream.skipBytes(4 + 3);
+            }
+            break;
 
-          switch (StiTarget.values()[dataStream.readUnsignedByte()]) {
-            case NONE:
-              break;
-            case ENTITY:
-              int entityId = dataStream.readInt();
-              break;
-            case POSITION:
+          case CMDST_ISSUE_COMMAND:
+          case CMDST_ISSUE_FACTORY_COMMAND:
+            commandsPerMinuteByPlayer
+              .computeIfAbsent(player, p -> new HashMap<>())
+              .computeIfAbsent(ticks, t -> new AtomicInteger())
+              .incrementAndGet();
+
+            int unitNums = dataStream.readInt();
+            dataStream.skipBytes(unitNums * 4);
+
+            dataStream.skipBytes(8);
+            int commandType = dataStream.readUnsignedByte();
+            dataStream.skipBytes(4);
+
+            switch (StiTarget.values()[dataStream.readUnsignedByte()]) {
+              case NONE:
+                break;
+              case ENTITY:
+                int entityId = dataStream.readInt();
+                break;
+              case POSITION:
+                x = dataStream.readFloat();
+                y = dataStream.readFloat();
+                z = dataStream.readFloat();
+                break;
+              default:
+            }
+
+            dataStream.skipBytes(1);
+            int formation = dataStream.readInt();
+            if (formation != -1) {
+              w = dataStream.readFloat();
               x = dataStream.readFloat();
               y = dataStream.readFloat();
               z = dataStream.readFloat();
-              break;
-            default:
-          }
+              scale = dataStream.readFloat();
+            }
 
-          dataStream.skipBytes(1);
-          int formation = dataStream.readInt();
-          if (formation != -1) {
-            w = dataStream.readFloat();
-            x = dataStream.readFloat();
-            y = dataStream.readFloat();
-            z = dataStream.readFloat();
-            scale = dataStream.readFloat();
-          }
+            String bp = readString(dataStream);
+            dataStream.skipBytes(4 + 4 + 4);
+            Object upgradeLua = parseLua(dataStream);
+            if (upgradeLua != null) {
+              dataStream.skipBytes(1);
+            }
 
-          String bp = readString(dataStream);
-          dataStream.skipBytes(4 + 4 + 4);
-          Object upgradeLua = parseLua(dataStream);
-          if (upgradeLua != null) {
-            dataStream.skipBytes(1);
-          }
+            ((List<NotSure>) armies.get(player).get("commands")).add(new NotSure(ticks, commandType, bp, upgradeLua != null));
+            break;
 
-          ((List<NotSure>) armies.get(player).get("commands")).add(new NotSure(ticks, commandType, bp, upgradeLua != null));
-          break;
+          case CMDST_RESUME:
+          case CMDST_REQUEST_PAUSE:
+          case CMDST_END_GAME:
+            break;
 
-        case CMDST_RESUME:
-        case CMDST_REQUEST_PAUSE:
-        case CMDST_END_GAME:
-          break;
+          case CMDST_SET_COMMAND_TYPE:
+            dataStream.skipBytes(8);
+            break;
 
-        case CMDST_SET_COMMAND_TYPE:
-          dataStream.skipBytes(8);
-          break;
-
-        default:
-          dataStream.skipBytes(messageLength - 3);
+          default:
+            dataStream.skipBytes(messageLength - 3);
+        }
+      } catch (Exception throwable) {
+        log.warn("Unable to determine command {}", commandId, throwable);
+        dataStream.skipBytes(messageLength - 3);
       }
     }
   }
