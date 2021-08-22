@@ -10,7 +10,7 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("leagueSeasonDivision")
-public class LeagueSeasonDivision extends AbstractEntity {
+public class LeagueSeasonDivision extends AbstractEntity<LeagueSeasonDivision> {
   private String descriptionKey;
   private Integer divisionIndex;
   @ToString.Include

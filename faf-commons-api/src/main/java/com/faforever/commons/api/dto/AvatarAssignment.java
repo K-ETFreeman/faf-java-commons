@@ -13,7 +13,7 @@ import java.time.OffsetDateTime;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("avatarAssignment")
-public class AvatarAssignment extends AbstractEntity {
+public class AvatarAssignment extends AbstractEntity<AvatarAssignment> {
   @ToString.Include
   private Boolean selected;
   private OffsetDateTime expiresAt;

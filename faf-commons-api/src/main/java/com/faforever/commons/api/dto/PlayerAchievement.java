@@ -11,7 +11,7 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("playerAchievement")
-public class PlayerAchievement extends AbstractEntity {
+public class PlayerAchievement extends AbstractEntity<PlayerAchievement> {
   @ToString.Include
   private AchievementState state;
   private Integer currentSteps;

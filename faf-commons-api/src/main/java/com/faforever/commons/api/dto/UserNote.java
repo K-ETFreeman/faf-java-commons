@@ -11,7 +11,7 @@ import lombok.ToString;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("userNote")
 @RestrictedVisibility("IsModerator")
-public class UserNote extends AbstractEntity {
+public class UserNote extends AbstractEntity<UserNote> {
   @Relationship("player")
   private Player player;
   @Relationship("author")

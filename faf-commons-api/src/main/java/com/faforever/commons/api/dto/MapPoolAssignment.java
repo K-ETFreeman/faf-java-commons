@@ -10,7 +10,7 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("mapPoolAssignment")
-public class MapPoolAssignment extends AbstractEntity {
+public class MapPoolAssignment extends AbstractEntity<MapPoolAssignment> {
   @ToString.Include
   int weight;
   @ToString.Include

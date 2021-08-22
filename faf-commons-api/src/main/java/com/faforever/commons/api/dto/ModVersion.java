@@ -14,7 +14,7 @@ import java.util.List;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("modVersion")
-public class ModVersion extends AbstractEntity {
+public class ModVersion extends AbstractEntity<ModVersion> {
   @ToString.Include
   private String uid;
   @ToString.Include

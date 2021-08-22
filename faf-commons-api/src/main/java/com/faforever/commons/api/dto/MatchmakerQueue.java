@@ -10,7 +10,7 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("matchmakerQueue")
-public class MatchmakerQueue extends AbstractEntity {
+public class MatchmakerQueue extends AbstractEntity<MatchmakerQueue> {
   @ToString.Include
   private String technicalName;
   @ToString.Include

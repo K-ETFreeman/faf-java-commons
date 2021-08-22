@@ -10,7 +10,7 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("leaderboardRatingJournal")
-public class LeaderboardRatingJournal extends AbstractEntity{
+public class LeaderboardRatingJournal extends AbstractEntity<LeaderboardRatingJournal> {
   private Double meanAfter;
   private Double deviationAfter;
   private Double meanBefore;

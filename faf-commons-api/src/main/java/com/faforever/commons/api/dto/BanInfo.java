@@ -14,7 +14,7 @@ import java.time.OffsetDateTime;
 @Data
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
-public class BanInfo extends AbstractEntity {
+public class BanInfo extends AbstractEntity<BanInfo> {
   @Relationship("player")
   @JsonIgnore
   private Player player;

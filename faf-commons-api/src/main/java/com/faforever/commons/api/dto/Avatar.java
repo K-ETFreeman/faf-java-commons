@@ -13,7 +13,7 @@ import java.util.List;
 @Data
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
-public class Avatar extends AbstractEntity {
+public class Avatar extends AbstractEntity<Avatar> {
   @ToString.Include
   private String url;
   private String tooltip;

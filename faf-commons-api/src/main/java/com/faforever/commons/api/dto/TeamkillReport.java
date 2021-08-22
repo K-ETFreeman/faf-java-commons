@@ -13,7 +13,7 @@ import java.time.OffsetDateTime;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type(TeamkillReport.TYPE_NAME)
 @RestrictedVisibility("IsModerator")
-public class TeamkillReport extends AbstractEntity {
+public class TeamkillReport extends AbstractEntity<TeamkillReport> {
 
   public static final String TYPE_NAME = "teamkillReport";
 

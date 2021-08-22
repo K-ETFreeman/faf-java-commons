@@ -10,7 +10,7 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("tutorial")
-public class Tutorial extends AbstractEntity {
+public class Tutorial extends AbstractEntity<Tutorial> {
   private String descriptionKey;
   private String description;
   private String titleKey;

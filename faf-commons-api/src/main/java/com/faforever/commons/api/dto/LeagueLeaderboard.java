@@ -7,6 +7,6 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("leagueLeaderboard")
-public class LeagueLeaderboard extends AbstractEntity {
+public class LeagueLeaderboard extends AbstractEntity<LeagueLeaderboard> {
   private String technicalName;
 }

@@ -15,7 +15,7 @@ import java.util.List;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("mapVersion")
-public class MapVersion extends AbstractEntity {
+public class MapVersion extends AbstractEntity<MapVersion> {
   private String description;
   private Integer maxPlayers;
   private Integer width;

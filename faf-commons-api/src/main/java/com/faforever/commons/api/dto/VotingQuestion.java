@@ -12,7 +12,7 @@ import java.util.List;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type(VotingQuestion.TYPE_NAME)
-public class VotingQuestion extends AbstractEntity {
+public class VotingQuestion extends AbstractEntity<VotingQuestion> {
   public static final String TYPE_NAME = "votingQuestion";
 
   private int numberOfAnswers;

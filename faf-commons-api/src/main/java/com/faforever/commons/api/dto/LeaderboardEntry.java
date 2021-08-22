@@ -10,7 +10,7 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("leaderboardRating")
-public class LeaderboardEntry extends AbstractEntity {
+public class LeaderboardEntry extends AbstractEntity<LeaderboardEntry> {
   @ToString.Include
   private Double mean;
   @ToString.Include

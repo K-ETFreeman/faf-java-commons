@@ -12,7 +12,7 @@ import java.util.List;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("clan")
-public class Clan extends AbstractEntity {
+public class Clan extends AbstractEntity<Clan> {
   @ToString.Include
   private String name;
   @ToString.Include

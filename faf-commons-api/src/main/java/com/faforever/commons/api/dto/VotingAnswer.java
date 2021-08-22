@@ -11,7 +11,7 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type(VotingAnswer.TYPE_NAME)
-public class VotingAnswer extends AbstractEntity {
+public class VotingAnswer extends AbstractEntity<VotingAnswer> {
   public static final String TYPE_NAME = "votingAnswer";
 
   @Relationship("vote")

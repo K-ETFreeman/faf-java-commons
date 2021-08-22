@@ -10,7 +10,7 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("clanMembership")
-public class ClanMembership extends AbstractEntity {
+public class ClanMembership extends AbstractEntity<ClanMembership> {
   @ToString.Include
   @Relationship("clan")
   private Clan clan;

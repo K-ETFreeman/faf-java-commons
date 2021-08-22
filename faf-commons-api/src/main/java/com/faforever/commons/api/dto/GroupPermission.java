@@ -12,7 +12,7 @@ import java.util.Set;
 @Data
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
-public class GroupPermission extends AbstractEntity {
+public class GroupPermission extends AbstractEntity<GroupPermission> {
   public static final String TYPE_NAME = "groupPermission";
 
   public static final String ROLE_READ_AUDIT_LOG = "ROLE_READ_AUDIT_LOG";

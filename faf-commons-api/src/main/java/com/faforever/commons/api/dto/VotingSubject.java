@@ -13,7 +13,7 @@ import java.util.List;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type(VotingSubject.TYPE_NAME)
-public class VotingSubject extends AbstractEntity {
+public class VotingSubject extends AbstractEntity<VotingSubject> {
   public static final String TYPE_NAME = "votingSubject";
 
   private String subjectKey;

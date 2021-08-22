@@ -13,7 +13,7 @@ import java.util.Set;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type(UserGroup.TYPE_NAME)
-public class UserGroup extends AbstractEntity {
+public class UserGroup extends AbstractEntity<UserGroup> {
 
   public static final String TYPE_NAME = "userGroup";
 

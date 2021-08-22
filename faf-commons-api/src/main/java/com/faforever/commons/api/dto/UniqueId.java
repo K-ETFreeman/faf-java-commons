@@ -11,7 +11,7 @@ import lombok.ToString;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("uniqueId")
 @RestrictedVisibility("IsModerator")
-public class UniqueId extends AbstractEntity {
+public class UniqueId extends AbstractEntity<UniqueId> {
 
   @EqualsAndHashCode.Include
   @ToString.Include

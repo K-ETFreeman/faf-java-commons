@@ -14,7 +14,7 @@ import java.time.OffsetDateTime;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("leagueSeason")
-public class LeagueSeason extends AbstractEntity {
+public class LeagueSeason extends AbstractEntity<LeagueSeason> {
   @ToString.Include
   private String nameKey;
   private OffsetDateTime startDate;

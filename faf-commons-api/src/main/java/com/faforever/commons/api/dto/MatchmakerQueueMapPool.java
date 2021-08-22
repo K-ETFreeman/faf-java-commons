@@ -11,7 +11,7 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("matchmakerQueueMapPool")
-public class MatchmakerQueueMapPool extends AbstractEntity {
+public class MatchmakerQueueMapPool extends AbstractEntity<MatchmakerQueueMapPool> {
   @ToString.Include
   private Double minRating;
   @ToString.Include

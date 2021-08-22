@@ -13,7 +13,7 @@ import java.util.List;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("mapPool")
-public class MapPool extends AbstractEntity {
+public class MapPool extends AbstractEntity<MapPool> {
 
   @ToString.Include
   private String name;

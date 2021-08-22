@@ -8,7 +8,7 @@ import lombok.ToString;
 @Data
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
-public class Review extends AbstractEntity {
+public class Review extends AbstractEntity<Review> {
   private String text;
   private Byte score;
 

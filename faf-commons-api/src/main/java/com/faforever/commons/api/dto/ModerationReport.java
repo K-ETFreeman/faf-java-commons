@@ -12,7 +12,7 @@ import java.util.Set;
 @Data
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
-public class ModerationReport extends AbstractEntity {
+public class ModerationReport extends AbstractEntity<ModerationReport> {
   private String reportDescription;
   private ModerationReportStatus reportStatus;
   private String gameIncidentTimecode;

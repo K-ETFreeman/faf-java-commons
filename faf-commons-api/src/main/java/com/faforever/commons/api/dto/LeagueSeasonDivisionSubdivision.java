@@ -10,7 +10,7 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("leagueSeasonDivisionSubdivision")
-public class LeagueSeasonDivisionSubdivision extends AbstractEntity {
+public class LeagueSeasonDivisionSubdivision extends AbstractEntity<LeagueSeasonDivisionSubdivision> {
   private String descriptionKey;
   private Integer highestScore;
   private Integer maxRating;

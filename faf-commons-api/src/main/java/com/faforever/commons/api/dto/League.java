@@ -11,7 +11,7 @@ import lombok.ToString;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 @Type("league")
-public class League extends AbstractEntity {
+public class League extends AbstractEntity<League> {
   @ToString.Include
   private String technicalName;
   private String nameKey;

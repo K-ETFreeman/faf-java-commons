@@ -25,8 +25,8 @@ class AllDtoTest {
   @Test
   void unequalityAbstractEntityTest() {
     // Reproduction of issue #11
-    AbstractEntity player = new Player().setId("equal-id");
-    AbstractEntity avatar = new Avatar().setId("equal-id");
+    AbstractEntity<?> player = new Player().setId("equal-id");
+    AbstractEntity<?> avatar = new Avatar().setId("equal-id");
 
     assertNotEquals(player, avatar);
   }
