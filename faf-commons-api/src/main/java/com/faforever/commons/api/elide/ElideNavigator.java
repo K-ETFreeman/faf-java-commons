@@ -21,14 +21,14 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSelector<T>, ElideNavigatorOnId<T>, ElideNavigatorOnCollection<T> {
-  private Optional<String> id = Optional.empty();
   @Getter
-  private Class<T> dtoClass;
-  private Optional<ElideNavigator<?>> parentNavigator;
+  private final Class<T> dtoClass;
+  private final List<String> includes = new ArrayList<>();
+  private final List<String> sorts = new ArrayList<>();
+  private final Optional<ElideNavigator<?>> parentNavigator;
   private String parentName = null;
+  private Optional<String> id = Optional.empty();
   private Optional<String> relationship = Optional.empty();
-  private List<String> includes = new ArrayList<>();
-  private List<String> sorts = new ArrayList<>();
   private Optional<Condition<?>> filterCondition = Optional.empty();
   private Optional<Integer> pageSize = Optional.empty();
   private Optional<Integer> pageNumber = Optional.empty();
@@ -92,15 +92,11 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
   }
 
   /**
-   * Add an include to an ID-pointed ElideNavigator
+   * Add an include to an ElideNavigator
    * Important: ElideNavigator takes care of referencing to the correct parent relationships. Just use a relative include.
    */
   @Override
-  public ElideNavigatorOnId<T> addIncludeOnId(@NotNull String include) {
-    return addInclude(include);
-  }
-
-  private ElideNavigator<T> addInclude(@NotNull String include) {
+  public ElideNavigator<T> addInclude(@NotNull String include) {
     log.trace("include added: {}", include);
     includes.add(include);
     return this;
@@ -111,15 +107,6 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
     log.trace("relationship added: {}", name);
     this.relationship = Optional.of(name);
     return new ElideNavigator<>(dtoClass, this, name);
-  }
-
-  /**
-   * Add an include to a collection-pointed ElideNavigator
-   * Important: ElideNavigator takes care of referencing to the correct parent relationships. Just use a relative include.
-   */
-  @Override
-  public ElideNavigatorOnCollection<T> addIncludeOnCollection(@NotNull String include) {
-    return addInclude(include);
   }
 
   /**

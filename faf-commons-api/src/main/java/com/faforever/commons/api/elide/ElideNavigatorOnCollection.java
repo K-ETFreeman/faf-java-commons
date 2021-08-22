@@ -4,7 +4,7 @@ import com.github.rutledgepaulv.qbuilders.conditions.Condition;
 
 public interface ElideNavigatorOnCollection<T extends ElideEntity> {
 
-  ElideNavigatorOnCollection<T> addIncludeOnCollection(String include);
+  ElideNavigatorOnCollection<T> addInclude(String include);
 
   ElideNavigatorOnCollection<T> addSortingRule(String field, boolean ascending);
 

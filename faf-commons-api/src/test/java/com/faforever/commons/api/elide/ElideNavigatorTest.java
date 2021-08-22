@@ -27,7 +27,7 @@ class ElideNavigatorTest {
   void testGetListSingleInclude() {
     assertThat(ElideNavigator.of(Ladder1v1Map.class)
       .collection()
-      .addIncludeOnCollection("mapVersion")
+      .addInclude("mapVersion")
       .build(), is("/data/ladder1v1Map?include=mapVersion"));
   }
 
@@ -35,8 +35,8 @@ class ElideNavigatorTest {
   void testGetListMultipleInclude() {
     assertThat(ElideNavigator.of(Ladder1v1Map.class)
       .collection()
-      .addIncludeOnCollection("mapVersion")
-      .addIncludeOnCollection("mapVersion.map")
+      .addInclude("mapVersion")
+      .addInclude("mapVersion.map")
       .build(), is("/data/ladder1v1Map?include=mapVersion,mapVersion.map"));
   }
 
@@ -57,8 +57,8 @@ class ElideNavigatorTest {
   void testGetListCombinedFilter() {
     assertThat(ElideNavigator.of(Ladder1v1Map.class)
       .collection()
-      .addIncludeOnCollection("mapVersion")
-      .addIncludeOnCollection("mapVersion.map")
+      .addInclude("mapVersion")
+      .addInclude("mapVersion.map")
       .pageSize(10)
       .pageNumber(3)
       .addFilter(
@@ -74,8 +74,8 @@ class ElideNavigatorTest {
   void testGetIdMultipleInclude() {
     assertThat(ElideNavigator.of(Ladder1v1Map.class)
       .id("5")
-      .addIncludeOnId("mapVersion")
-      .addIncludeOnId("mapVersion.map")
+      .addInclude("mapVersion")
+      .addInclude("mapVersion.map")
       .build(), is("/data/ladder1v1Map/5?include=mapVersion,mapVersion.map"));
   }
 
