@@ -126,10 +126,15 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
    * Important: ElideNavigator takes care of referencing to the correct parent relationships. Just use a relative include.
    */
   @Override
-  public ElideNavigatorOnCollection<T> addFilter(@NotNull Condition<?> eq) {
+  public ElideNavigatorOnCollection<T> setFilter(@NotNull Condition<?> eq) {
     log.trace("filter set: {}", eq);
     filterCondition = Optional.of(eq);
     return this;
+  }
+
+  @Override
+  public Optional<Condition<?>> getFilter() {
+    return filterCondition;
   }
 
   @Override

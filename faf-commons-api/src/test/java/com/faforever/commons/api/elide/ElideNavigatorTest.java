@@ -3,9 +3,12 @@ package com.faforever.commons.api.elide;
 import com.faforever.commons.api.dto.Ladder1v1Map;
 import com.faforever.commons.api.dto.MapPoolAssignment;
 import com.faforever.commons.api.dto.MapVersion;
+import com.github.rutledgepaulv.qbuilders.conditions.Condition;
 import org.junit.jupiter.api.Test;
 
+import static com.faforever.commons.api.elide.ElideNavigator.qBuilder;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 class ElideNavigatorTest {
@@ -44,8 +47,8 @@ class ElideNavigatorTest {
   void testGetListFiltered() {
     assertThat(ElideNavigator.of(Ladder1v1Map.class)
       .collection()
-      .addFilter(
-        ElideNavigator.qBuilder()
+      .setFilter(
+        qBuilder()
           .intNum("mapVersion.id").gt(10)
           .or()
           .string("hello").eq("nana")
@@ -61,8 +64,8 @@ class ElideNavigatorTest {
       .addInclude("mapVersion.map")
       .pageSize(10)
       .pageNumber(3)
-      .addFilter(
-        ElideNavigator.qBuilder()
+      .setFilter(
+        qBuilder()
           .intNum("mapVersion.id").gt(10)
           .or()
           .string("hello").eq("nana")
@@ -105,6 +108,16 @@ class ElideNavigatorTest {
       .pageNumber(1)
       .pageTotals(true)
       .build(), is("/data/mapPoolAssignment?page[size]=1&page[number]=1&page[totals]"));
+  }
+
+  @Test
+  void testGetFilter() {
+    ElideNavigatorOnCollection<MapPoolAssignment> navigator = ElideNavigator.of(MapPoolAssignment.class)
+      .collection();
+    assertThat(navigator.getFilter().isEmpty(), is(true));
+    Condition<?> condition = qBuilder().string("test").eq("test");
+    navigator.setFilter(condition);
+    assertThat(navigator.getFilter().get(), is(condition));
   }
 
 }
