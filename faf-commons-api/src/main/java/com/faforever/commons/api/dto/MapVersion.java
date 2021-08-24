@@ -46,4 +46,7 @@ public class MapVersion extends AbstractEntity<MapVersion> {
 
   @Relationship("reviews")
   private List<MapVersionReview> reviews;
+
+  @Relationship("reviewsSummary")
+  private MapVersionReviewsSummary mapVersionReviewsSummary;
 }
