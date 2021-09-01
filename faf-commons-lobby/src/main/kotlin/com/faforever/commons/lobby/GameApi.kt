@@ -179,6 +179,8 @@ data class GameLaunchResponse(
   val expectedPlayers: Int? = null,
   @JsonProperty("map_position")
   val mapPosition: Int? = null,
+  @JsonProperty("game_options")
+  val gameOptions: Map<String, String>? = null,
   val team: Int? = null,
   val faction: Faction? = null,
 ) : ServerMessage
