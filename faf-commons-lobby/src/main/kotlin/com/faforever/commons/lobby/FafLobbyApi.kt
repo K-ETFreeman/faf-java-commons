@@ -1,9 +1,12 @@
 package com.faforever.commons.lobby
 
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.annotation.JsonValue
 import reactor.core.publisher.Flux
+
 
 /**
  * Marker interface to identify messages on the Lobby protocol
@@ -104,27 +107,40 @@ interface FafLobbyApi :
 /// * SHARED ENUMS *
 /// ****************
 
-enum class Faction {
-  @JsonProperty("uef")
-  UEF,
+enum class Faction(
+  @JsonValue
+  val faString: String,
+  val faIndex: Int
+) {
+  UEF("uef", 1),
 
-  @JsonProperty("aeon")
-  AEON,
+  AEON("aeon", 2),
 
-  @JsonProperty("cybran")
-  CYBRAN,
+  CYBRAN("cybran", 3),
 
-  @JsonProperty("seraphim")
-  SERAPHIM,
+  SERAPHIM("seraphim", 4),
 
-  @JsonProperty("random")
-  RANDOM,
+  RANDOM("random", 5),
 
-  @JsonProperty("civilian")
-  CIVILIAN
+  CIVILIAN("civilian", 6);
+
+  companion object {
+    private val fromFAString: Map<String, Faction> = values().asList().associateBy { it.faString }
+    private val fromFAIndex: Map<Int, Faction> = values().asList().associateBy { it.faIndex }
+
+    @JvmStatic
+    @JsonCreator
+    fun fromObject(value: Any?): Faction? {
+      return when (value) {
+        is Int -> fromFAIndex[value]
+        is String -> fromFAString[value]
+        else -> null
+      }
+    }
+  }
 }
 
-enum class MessageTarget{
+enum class MessageTarget {
   @JsonProperty("game")
   GAME
 }

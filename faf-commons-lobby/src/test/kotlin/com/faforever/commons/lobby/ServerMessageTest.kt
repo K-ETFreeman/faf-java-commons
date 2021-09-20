@@ -271,6 +271,32 @@ class ServerMessageTest {
   }
 
   @Test
+  fun deserializeMatchmakerGameLaunchResponse() {
+    val result = objectMapper.readValue<ServerMessage>(
+      """
+      {"command":"game_launch","args":["/numgames",224],"uid":13757455,"mod":"faf","name":"Unit Test","init_mode":0,"rating_type":"global","mapname":"test","expected_players":2,"map_position":1,"team":1,"faction":3}
+    """.trimIndent()
+    )
+
+    assertEquals(
+      GameLaunchResponse(
+        13757455,
+        "Unit Test",
+        "faf",
+        LobbyMode.DEFAULT_LOBBY,
+        "global",
+        listOf("/numgames", "224"),
+        "test",
+        2,
+        1,
+        1,
+        Faction.CYBRAN,
+      ),
+      result
+    )
+  }
+
+  @Test
   fun deserializePartyInfo() {
     val result = objectMapper.readValue<ServerMessage>(
       """

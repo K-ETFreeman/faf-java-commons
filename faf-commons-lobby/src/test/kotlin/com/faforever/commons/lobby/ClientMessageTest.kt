@@ -102,6 +102,14 @@ class ClientMessageTest {
   }
 
   @Test
+  fun serializeSelectNoAvatarRequest() {
+    assertEquals("""
+      {"command":"avatar","avatar":null,"action":"select"}
+      """.trimIndent(),
+      objectMapper.writeValueAsString(SelectAvatarRequest(null)))
+  }
+
+  @Test
   fun serializeIceServerListRequest() {
     assertEquals("""
       {"command":"ice_servers"}
