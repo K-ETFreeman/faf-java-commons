@@ -27,4 +27,8 @@ public class UserGroup extends AbstractEntity<UserGroup> {
   private Set<Player> members;
   @Relationship("permissions")
   private Set<GroupPermission> permissions;
+  @Relationship("children")
+  private Set<UserGroup> children;
+  @Relationship("parent")
+  private UserGroup parent;
 }
