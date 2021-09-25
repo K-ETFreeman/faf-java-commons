@@ -30,5 +30,6 @@ public class UserGroup extends AbstractEntity<UserGroup> {
   @Relationship("children")
   private Set<UserGroup> children;
   @Relationship("parent")
+  @JsonIgnore
   private UserGroup parent;
 }
