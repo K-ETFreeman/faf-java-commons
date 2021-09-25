@@ -1,6 +1,7 @@
 package com.faforever.commons.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.Data;
@@ -21,6 +22,7 @@ public class UserGroup extends AbstractEntity<UserGroup> {
   private String technicalName;
   @ToString.Include
   private String nameKey;
+  @JsonProperty("public")
   private boolean public_;
   @Relationship("members")
   @JsonIgnore
