@@ -274,7 +274,7 @@ class ServerMessageTest {
   fun deserializeMatchmakerGameLaunchResponse() {
     val result = objectMapper.readValue<ServerMessage>(
       """
-      {"command":"game_launch","args":["/numgames",224],"uid":13757455,"mod":"faf","name":"Unit Test","init_mode":0,"rating_type":"global","mapname":"test","expected_players":2,"map_position":1,"team":1,"faction":3}
+      {"command":"game_launch","args":["/numgames",224],"uid":13757455,"mod":"faf","name":"Unit Test","init_mode":0,"game_options":{"UnitCap":500,"Observers":true, "Share":"FullShare"},"rating_type":"global","mapname":"test","expected_players":2,"map_position":1,"team":1,"faction":3}
     """.trimIndent()
     )
 
@@ -289,6 +289,7 @@ class ServerMessageTest {
         "test",
         2,
         1,
+        mapOf("UnitCap" to "500", "Observers" to "true", "Share" to "FullShare"),
         1,
         Faction.CYBRAN,
       ),
