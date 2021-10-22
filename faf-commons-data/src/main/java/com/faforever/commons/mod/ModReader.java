@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.Comparator;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -48,16 +48,13 @@ public class ModReader {
   @SneakyThrows
   public Mod readZip(Path path) {
     try (ZipFile zipFile = new ZipFile(path.toFile())) {
-      Enumeration<? extends ZipEntry> entries = zipFile.entries();
-      while (entries.hasMoreElements()) {
-        ZipEntry zipEntry = entries.nextElement();
-        if (!"mod_info.lua".equals(Paths.get(zipEntry.getName()).getFileName().toString())) {
-          continue;
-        }
-        return readModInfo(zipFile.getInputStream(zipEntry), path);
-      }
+      ZipEntry modInfoLua = zipFile.stream()
+        .filter(zipEntry -> "mod_info.lua".equals(Paths.get(zipEntry.getName()).getFileName().toString()))
+        .min(Comparator.comparing(ze -> ze.getName().split("/").length))
+        .orElseThrow(() -> new ModLoadException("Missing mod_info.lua in: " + path.toAbsolutePath()));
+
+      return readModInfo(zipFile.getInputStream(modInfoLua), path);
     }
-    throw new ModLoadException("Missing mod_info.lua in: " + path.toAbsolutePath());
   }
 
   /**
