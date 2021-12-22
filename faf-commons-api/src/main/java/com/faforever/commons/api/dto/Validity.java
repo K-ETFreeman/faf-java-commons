@@ -1,5 +1,6 @@
 package com.faforever.commons.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 import lombok.Getter;
 
 public enum Validity {
@@ -28,7 +29,9 @@ public enum Validity {
   WRONG_DIFFICULTY("game.reasonNotValid.difficulty"),
   EXPANSION_DISABLED("game.reasonNotValid.expansion"),
   SPAWN_NOT_FIXED("game.reasonNotValid.spawn"),
-  OTHER_UNRANK("game.reasonNotValid.other");
+  @JsonEnumDefaultValue
+  OTHER_UNRANK("game.reasonNotValid.other"),
+  UNRANKED_BY_HOST("game.reasonNotValid.unrankedByHost");
 
   @Getter
   private final String i18nKey;
