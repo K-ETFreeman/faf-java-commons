@@ -1,6 +1,7 @@
 package com.faforever.commons.api.dto;
 
 import com.faforever.commons.api.elide.ElideEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.jasminb.jsonapi.annotations.Id;
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
@@ -39,6 +40,7 @@ public class GamePlayerStats implements ElideEntity {
   private OffsetDateTime scoreTime;
 
   @Relationship("game")
+  @JsonIgnore
   private Game game;
 
   @Relationship("player")

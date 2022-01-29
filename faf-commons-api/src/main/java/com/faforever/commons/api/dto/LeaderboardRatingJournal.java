@@ -1,5 +1,6 @@
 package com.faforever.commons.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.Data;
@@ -18,9 +19,11 @@ public class LeaderboardRatingJournal extends AbstractEntity<LeaderboardRatingJo
 
   @Relationship("gamePlayerStats")
   @ToString.Include
+  @JsonIgnore
   private GamePlayerStats gamePlayerStats;
 
   @Relationship("leaderboard")
   @ToString.Include
+  @JsonIgnore
   private Leaderboard leaderboard;
 }
