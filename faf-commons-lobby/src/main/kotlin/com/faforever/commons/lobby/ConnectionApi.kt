@@ -55,7 +55,7 @@ data class NoticeInfo(
  * The server assigns us a session id, onto which we will authorize.
  * Does it make sense? Probably not.
  */
-internal data class SessionResponse(
+data class SessionResponse(
   val session: Long,
 ) : ServerMessage
 
@@ -113,7 +113,7 @@ data class Player(
  * Response if the login failed with an all english response on what failed.
  * FIXME: This should send error codes instead of translated text.
  */
-internal data class LoginFailedResponse(
+data class LoginFailedResponse(
   val text: String?,
 ) : ServerMessage
 

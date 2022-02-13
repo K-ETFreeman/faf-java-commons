@@ -10,6 +10,7 @@ buildscript {
 
 subprojects {
 
+  apply plugin: 'maven-publish'
   apply plugin: 'java-library'
   apply plugin: 'com.github.kt3k.coveralls'
 
@@ -22,6 +23,14 @@ subprojects {
   repositories {
     mavenCentral()
     jcenter()
+  }
+
+  publishing {
+    publications {
+      maven(MavenPublication) {
+        from components.java
+      }
+    }
   }
 
   dependencies {

@@ -1,10 +1,10 @@
 package com.faforever.commons.lobby
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.netty.buffer.Unpooled
 import io.netty.handler.codec.LineBasedFrameDecoder
 import io.netty.handler.codec.string.LineEncoder
 import io.netty.handler.codec.string.LineSeparator
+import io.netty.resolver.DefaultAddressResolverGroup
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Flux
@@ -39,6 +39,7 @@ class FafLobbyClient(
   )
 
   private val eventSink: Sinks.Many<ServerMessage> = Sinks.many().multicast().directBestEffort()
+  private val disconnectsSink: Sinks.Many<Unit> = Sinks.many().multicast().directBestEffort()
   private val rawEvents = eventSink.asFlux()
 
   override val events = eventSink.asFlux().filter {
@@ -49,7 +50,10 @@ class FafLobbyClient(
       it !is LoginFailedResponse
   }
 
-  private val client = TcpClient.create()
+  override val disconnects = disconnectsSink.asFlux();
+
+  private val client = TcpClient.newConnection()
+    .resolver(DefaultAddressResolverGroup.INSTANCE)
     .doOnResolveError { connection, throwable ->
       LOG.error("Could not connect to server", throwable)
       connection.dispose()
@@ -63,6 +67,7 @@ class FafLobbyClient(
     .doOnDisconnected {
       LOG.info("Disconnected from server")
       it.dispose()
+      disconnectsSink.tryEmitNext(Unit)
     }
 
   private fun openConnection(): Mono<out Connection> {
@@ -122,18 +127,21 @@ class FafLobbyClient(
             }
         ).then()
 
-        inboundMono.mergeWith(outboundMono)
+        /* The lobby protocol requires two-way communication. If either the outbound or inbound connections complete/close
+           then we are better off closing the connection to the server. This is why we return a mono that completes when one
+           of the connections finishes */
+        Mono.firstWithSignal(inboundMono, outboundMono)
       }
       .connect()
   }
 
-  override fun connectAndLogin(config: Config): Mono<LoginSuccessResponse>{
+  override fun connectAndLogin(config: Config): Mono<LoginSuccessResponse> {
     this.config = config
-    return Mono.fromCallable {
-      openConnection().subscribe({connection = it}, {LOG.error("Error during connection", it)})
-      send(SessionRequest(config.version, config.userAgent))
-    }.then(
-      rawEvents
+    return openConnection()
+      .doOnSuccess { connection = it }
+      .doOnError { LOG.error("Error during connection", it) }
+      .then(Mono.fromCallable { send(SessionRequest(config.version, config.userAgent)) })
+      .then(rawEvents
         .flatMap {
           when (it) {
             is LoginSuccessResponse -> Mono.just(it)
@@ -142,8 +150,7 @@ class FafLobbyClient(
           }
         }
         .cast(LoginSuccessResponse::class.java)
-        .next()
-    )
+        .next())
   }
 
   override fun disconnect() {

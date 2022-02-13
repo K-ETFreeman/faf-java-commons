@@ -101,6 +101,11 @@ interface FafLobbyApi :
    * Internal events such as Ping or LoginResponse are filtered out.
    */
   val events: Flux<ServerMessage>
+
+  /**
+   * Emits whenever the tcp connection is closed
+   */
+  val disconnects: Flux<Unit>
 }
 
 /// ****************
