@@ -19,6 +19,7 @@ public class LeagueSeason extends AbstractEntity<LeagueSeason> {
   private String nameKey;
   private Integer seasonNumber;
   private Integer placementGames;
+  private Integer placementGamesReturningPlayer;
   private OffsetDateTime startDate;
   private OffsetDateTime endDate;
 
