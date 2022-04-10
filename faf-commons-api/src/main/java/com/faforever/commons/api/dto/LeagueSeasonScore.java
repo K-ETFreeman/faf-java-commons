@@ -14,7 +14,7 @@ public class LeagueSeasonScore extends AbstractEntity<LeagueSeasonScore> {
   private Integer gameCount;
   private Integer loginId;
   private Integer score;
-  private Boolean returningPlayer;
+  private boolean returningPlayer;
 
   @Relationship("leagueSeason")
   private LeagueSeason leagueSeason;
