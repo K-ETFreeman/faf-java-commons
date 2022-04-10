@@ -253,7 +253,7 @@ class ServerMessageTest {
   fun deserializeGameLaunchResponse() {
     val result = objectMapper.readValue<ServerMessage>(
       """
-      {"command":"game_launch","args":["/numgames",224],"uid":13757455,"mod":"faf","name":"Unit Test","init_mode":0,"rating_type":"global"}
+      {"command":"game_launch","args":["/numgames",224],"uid":13757455,"mod":"faf","name":"Unit Test","init_mode":0,"rating_type":"global","game_type":"custom"}
     """.trimIndent()
     )
 
@@ -263,6 +263,7 @@ class ServerMessageTest {
         "Unit Test",
         "faf",
         LobbyMode.DEFAULT_LOBBY,
+        GameType.CUSTOM,
         "global",
         listOf("/numgames", "224"),
       ),
@@ -274,7 +275,7 @@ class ServerMessageTest {
   fun deserializeMatchmakerGameLaunchResponse() {
     val result = objectMapper.readValue<ServerMessage>(
       """
-      {"command":"game_launch","args":["/numgames",224],"uid":13757455,"mod":"faf","name":"Unit Test","init_mode":0,"game_options":{"UnitCap":500,"Observers":true, "Share":"FullShare"},"rating_type":"global","mapname":"test","expected_players":2,"map_position":1,"team":1,"faction":3}
+      {"command":"game_launch","args":["/numgames",224],"uid":13757455,"mod":"faf","name":"Unit Test","init_mode":0,"game_options":{"UnitCap":500,"Observers":true, "Share":"FullShare"},"rating_type":"global","game_type":"custom","mapname":"test","expected_players":2,"map_position":1,"team":1,"faction":3}
     """.trimIndent()
     )
 
@@ -284,6 +285,7 @@ class ServerMessageTest {
         "Unit Test",
         "faf",
         LobbyMode.DEFAULT_LOBBY,
+        GameType.CUSTOM,
         "global",
         listOf("/numgames", "224"),
         "test",

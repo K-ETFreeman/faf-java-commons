@@ -164,8 +164,11 @@ data class GameLaunchResponse(
   val name: String,
   @JsonProperty("mod")
   val featureMod: String,
+  @Deprecated(message = "Use gameType instead", replaceWith = ReplaceWith("gameType"))
   @JsonProperty("init_mode")
   val lobbyMode: LobbyMode,
+  @JsonProperty("game_type")
+  val gameType: GameType,
   /**
    * Technical name of the leaderboard to select ratings to be shown
    */
