@@ -14,7 +14,7 @@ import java.util.List;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
 public class Map extends AbstractEntity<Map> {
-  private boolean recommended;
+  private Boolean recommended;
   private String battleType;
   @ToString.Include
   private String displayName;

@@ -26,8 +26,8 @@ public class MapVersion extends AbstractEntity<MapVersion> {
   private String folderName;
   // TODO name consistently with folderName
   private String filename;
-  private boolean ranked;
-  private boolean hidden;
+  private Boolean ranked;
+  private Boolean hidden;
   private URL thumbnailUrlSmall;
   private URL thumbnailUrlLarge;
   private URL downloadUrl;

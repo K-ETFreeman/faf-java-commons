@@ -25,8 +25,8 @@ public class ModVersion extends AbstractEntity<ModVersion> {
   @ToString.Include
   private String filename;
   private String icon;
-  private boolean ranked;
-  private boolean hidden;
+  private Boolean ranked;
+  private Boolean hidden;
   private URL thumbnailUrl;
   private URL downloadUrl;
 
