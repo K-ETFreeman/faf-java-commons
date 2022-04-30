@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.time.OffsetDateTime
 
@@ -25,13 +26,21 @@ class ServerMessageTest {
        {"command":"welcome","me":{"id":76365,"login":"Brutus5000","avatar":{"url":"https://content.faforever.com/faf/avatars/SystemSoftware.png","tooltip":"DevOps Councillor"},"country":"DE","ratings":{"global":{"rating":[1194.13,80.9685],"number_of_games":224}}}}
      """.trimIndent()
     )
-    assertEquals(LoginSuccessResponse(
-      Player(
-        76365, "Brutus5000", null, Player.Avatar("https://content.faforever.com/faf/avatars/SystemSoftware.png", "DevOps Councillor"), "DE", null, mapOf(
-          "global" to Player.LeaderboardStats(224, Player.LeaderboardStats.LeaderboardRating(1194.13f,80.9685f))
+    assertEquals(
+      LoginSuccessResponse(
+        Player(
+          76365,
+          "Brutus5000",
+          null,
+          Player.Avatar("https://content.faforever.com/faf/avatars/SystemSoftware.png", "DevOps Councillor"),
+          "DE",
+          null,
+          mapOf(
+            "global" to Player.LeaderboardStats(224, Player.LeaderboardStats.LeaderboardRating(1194.13f, 80.9685f))
+          )
         )
-      )
-    ), result)
+      ), result
+    )
   }
 
   @Test
@@ -46,7 +55,10 @@ class ServerMessageTest {
         listOf(
           Player(
             65341, "Sheikah", null, null, "US", null, mapOf(
-              "ladder_1v1" to Player.LeaderboardStats(1725, Player.LeaderboardStats.LeaderboardRating(1384.16f, 66.4747f))
+              "ladder_1v1" to Player.LeaderboardStats(
+                1725,
+                Player.LeaderboardStats.LeaderboardRating(1384.16f, 66.4747f)
+              )
             )
           )
         )
@@ -316,4 +328,25 @@ class ServerMessageTest {
     )
   }
 
+  @Test
+  fun deserializePingMessage() {
+    val result = objectMapper.readValue<ServerMessage>(
+      """
+      {"command":"ping"}
+    """.trimIndent()
+    )
+
+    assertTrue(result is ServerPingMessage)
+  }
+
+  @Test
+  fun deserializePongMessage() {
+    val result = objectMapper.readValue<ServerMessage>(
+      """
+      {"command":"pong"}
+    """.trimIndent()
+    )
+
+    assertTrue(result is ServerPongMessage)
+  }
 }

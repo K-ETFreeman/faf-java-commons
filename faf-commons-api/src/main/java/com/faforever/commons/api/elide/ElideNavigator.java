@@ -194,7 +194,7 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
       id.map(i -> "/" + i).orElse("") +
       relationship.map(r -> "/" + r).orElse("") +
       queryArgs;
-    log.debug("Route built: {}", route);
+    log.trace("Route built: {}", route);
     return route;
   }
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.skyscreamer.jsonassert.JSONAssert
 
 class ClientMessageTest {
 
@@ -16,9 +17,9 @@ class ClientMessageTest {
 
   @Test
   fun serializeHostGameRequest() {
-    assertEquals("""
+    JSONAssert.assertEquals("""
       {"command":"game_host","mapname":"name","title":"title","mod":"mod","options":[],"access":"public","version":1,"password":null,"visibility":"public","rating_min":null,"rating_max":null,"enforce_rating_range":false}
-      """.trimIndent(),
+      """,
       objectMapper.writeValueAsString(
         HostGameRequest(
           "name",
@@ -33,191 +34,191 @@ class ClientMessageTest {
           null,
           false
         )
-      )
+      ), true
     )
   }
 
   @Test
   fun serializeJoinGameRequest() {
-    assertEquals("""
-      {"command":"game_join","uid":0,"password":null}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(JoinGameRequest(0, null)))
+    JSONAssert.assertEquals("""
+    {"command":"game_join","uid":0,"password":null}
+    """,
+   objectMapper.writeValueAsString(JoinGameRequest(0, null)), true)
   }
 
   @Test
   fun serializeSessionRequest() {
-    assertEquals("""
-      {"command":"ask_session","version":"1","user_agent":"boo"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(SessionRequest("1", "boo")))
+    JSONAssert.assertEquals("""
+    {"command":"ask_session","version":"1","user_agent":"boo"}
+    """,
+   objectMapper.writeValueAsString(SessionRequest("1", "boo")), true)
   }
 
   @Test
   fun serializeAddFriendRequest() {
-    assertEquals("""
-      {"command":"social_add","friend":0}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(AddFriendRequest(0)))
+    JSONAssert.assertEquals("""
+    {"command":"social_add","friend":0}
+    """,
+   objectMapper.writeValueAsString(AddFriendRequest(0)), true)
   }
 
   @Test
   fun serializeAddFoeRequest() {
-    assertEquals("""
-      {"command":"social_add","foe":0}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(AddFoeRequest(0)))
+    JSONAssert.assertEquals("""
+    {"command":"social_add","foe":0}
+    """,
+   objectMapper.writeValueAsString(AddFoeRequest(0)), true)
   }
 
   @Test
   fun serializeRemoveFriendRequest() {
-    assertEquals("""
-      {"command":"social_remove","friend":0}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(RemoveFriendRequest(0)))
+    JSONAssert.assertEquals("""
+    {"command":"social_remove","friend":0}
+    """,
+   objectMapper.writeValueAsString(RemoveFriendRequest(0)), true)
   }
 
   @Test
   fun serializeRemoveFoeRequest() {
-    assertEquals("""
-      {"command":"social_remove","foe":0}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(RemoveFoeRequest(0)))
+    JSONAssert.assertEquals("""
+    {"command":"social_remove","foe":0}
+    """,
+   objectMapper.writeValueAsString(RemoveFoeRequest(0)), true)
   }
 
   @Test
   fun serializeAvatarListRequest() {
-    assertEquals("""
-      {"command":"avatar","action":"list_avatar"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(AvatarListRequest()))
+    JSONAssert.assertEquals("""
+    {"command":"avatar","action":"list_avatar"}
+    """,
+   objectMapper.writeValueAsString(AvatarListRequest()), true)
   }
 
   @Test
   fun serializeSelectAvatarRequest() {
-    assertEquals("""
-      {"command":"avatar","avatar":"boo","action":"select"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(SelectAvatarRequest("boo")))
+    JSONAssert.assertEquals("""
+    {"command":"avatar","avatar":"boo","action":"select"}
+    """,
+   objectMapper.writeValueAsString(SelectAvatarRequest("boo")), true)
   }
 
   @Test
   fun serializeSelectNoAvatarRequest() {
-    assertEquals("""
-      {"command":"avatar","avatar":null,"action":"select"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(SelectAvatarRequest(null)))
+    JSONAssert.assertEquals("""
+    {"command":"avatar","avatar":null,"action":"select"}
+    """,
+   objectMapper.writeValueAsString(SelectAvatarRequest(null)), true)
   }
 
   @Test
   fun serializeIceServerListRequest() {
-    assertEquals("""
-      {"command":"ice_servers"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(IceServerListRequest()))
+    JSONAssert.assertEquals("""
+    {"command":"ice_servers"}
+    """,
+   objectMapper.writeValueAsString(IceServerListRequest()), true)
   }
 
   @Test
   fun serializeRestoreGameSessionRequest() {
-    assertEquals("""
-      {"command":"restore_game_session","game_id":0}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(RestoreGameSessionRequest(0)))
+    JSONAssert.assertEquals("""
+    {"command":"restore_game_session","game_id":0}
+    """,
+   objectMapper.writeValueAsString(RestoreGameSessionRequest(0)), true)
   }
 
   @Test
   fun serializePingMessage() {
-    assertEquals("""
+    JSONAssert.assertEquals("""
       {"command":"ping"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(PingMessage()))
+      """,
+      objectMapper.writeValueAsString(ClientPingMessage()), true)
   }
 
   @Test
   fun serializePongMessage() {
-    assertEquals("""
-      {"command":"pong"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(PongMessage()))
+    JSONAssert.assertEquals("""
+    {"command":"pong"}
+    """,
+   objectMapper.writeValueAsString(ClientPongMessage()), true)
   }
 
   @Test
   fun serializeClosePlayerGameRequest() {
-    assertEquals("""
-      {"command":"admin","user_id":0,"action":"closeFA"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(ClosePlayerGameRequest(0)))
+    JSONAssert.assertEquals("""
+    {"command":"admin","user_id":0,"action":"closeFA"}
+    """,
+   objectMapper.writeValueAsString(ClosePlayerGameRequest(0)), true)
   }
 
   @Test
   fun serializeClosePlayerLobbyRequest() {
-    assertEquals("""
-      {"command":"admin","user_id":0,"action":"closelobby"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(ClosePlayerLobbyRequest(0)))
+    JSONAssert.assertEquals("""
+    {"command":"admin","user_id":0,"action":"closelobby"}
+    """,
+   objectMapper.writeValueAsString(ClosePlayerLobbyRequest(0)), true)
   }
 
   @Test
   fun serializeBroadcastRequest() {
-    assertEquals("""
-      {"command":"admin","message":"boo","action":"broadcast"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(BroadcastRequest("boo")))
+    JSONAssert.assertEquals("""
+    {"command":"admin","message":"boo","action":"broadcast"}
+    """,
+   objectMapper.writeValueAsString(BroadcastRequest("boo")), true)
   }
 
   @Test
   fun serializeInviteToPartyRequest() {
-    assertEquals("""
-      {"command":"invite_to_party","recipient_id":0}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(InviteToPartyRequest(0)))
+    JSONAssert.assertEquals("""
+    {"command":"invite_to_party","recipient_id":0}
+    """,
+   objectMapper.writeValueAsString(InviteToPartyRequest(0)), true)
   }
 
   @Test
   fun serializeAcceptInviteToPartyRequest() {
-    assertEquals("""
-      {"command":"accept_party_invite","sender_id":0}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(AcceptInviteToPartyRequest(0)))
+    JSONAssert.assertEquals("""
+    {"command":"accept_party_invite","sender_id":0}
+    """,
+   objectMapper.writeValueAsString(AcceptInviteToPartyRequest(0)), true)
   }
 
   @Test
   fun serializeKickPlayerFromPartyRequest() {
-    assertEquals("""
-      {"command":"kick_player_from_party","kicked_player_id":0}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(KickPlayerFromPartyRequest(0)))
+    JSONAssert.assertEquals("""
+    {"command":"kick_player_from_party","kicked_player_id":0}
+    """,
+   objectMapper.writeValueAsString(KickPlayerFromPartyRequest(0)), true)
   }
 
   @Test
   fun serializeLeavePartyRequest() {
-    assertEquals("""
-      {"command":"leave_party"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(LeavePartyRequest()))
+    JSONAssert.assertEquals("""
+    {"command":"leave_party"}
+    """,
+   objectMapper.writeValueAsString(LeavePartyRequest()), true)
   }
 
   @Test
   fun serializeReadyPartyRequest() {
-    assertEquals("""
-      {"command":"ready_party"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(ReadyPartyRequest()))
+    JSONAssert.assertEquals("""
+    {"command":"ready_party"}
+    """,
+   objectMapper.writeValueAsString(ReadyPartyRequest()), true)
   }
 
   @Test
   fun serializeUnreadyPartyRequest() {
-    assertEquals("""
-      {"command":"unready_party"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(UnreadyPartyRequest()))
+    JSONAssert.assertEquals("""
+    {"command":"unready_party"}
+    """,
+   objectMapper.writeValueAsString(UnreadyPartyRequest()), true)
   }
 
   @Test
   fun serializeSelectPartyFactionsRequest() {
-    assertEquals("""
+    JSONAssert.assertEquals("""
       {"command":"set_party_factions","factions":["aeon","seraphim","uef","cybran"]}
-      """.trimIndent(),
+      """,
       objectMapper.writeValueAsString(
         SelectPartyFactionsRequest(
           setOf(
@@ -227,38 +228,38 @@ class ClientMessageTest {
             Faction.CYBRAN
           )
         )
-      )
+      ), true
     )
   }
 
   @Test
   fun serializeGameMatchmakingRequest() {
-    assertEquals("""
-      {"command":"game_matchmaking","queue_name":"1","state":"start"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(GameMatchmakingRequest("1", MatchmakerState.START)))
+    JSONAssert.assertEquals("""
+    {"command":"game_matchmaking","queue_name":"1","state":"start"}
+    """,
+   objectMapper.writeValueAsString(GameMatchmakingRequest("1", MatchmakerState.START)), true)
   }
 
   @Test
   fun serializeMatchmakerInfoRequest() {
-    assertEquals("""
-      {"command":"matchmaker_info"}
-      """.trimIndent(),
-      objectMapper.writeValueAsString(MatchmakerInfoRequest()))
+    JSONAssert.assertEquals("""
+    {"command":"matchmaker_info"}
+    """,
+   objectMapper.writeValueAsString(MatchmakerInfoRequest()), true)
   }
 
   @Test
   fun serializeAuthenticateRequest() {
-    assertEquals("""
+    JSONAssert.assertEquals("""
       {"command":"auth","token":"abc","session":1,"unique_id":"def"}
-      """.trimIndent(),
+      """,
       objectMapper.writeValueAsString(
         AuthenticateRequest(
           "abc",
           1,
           "def"
         )
-      )
+      ), true
     )
   }
 }

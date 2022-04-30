@@ -33,8 +33,8 @@ interface LobbyProtocolMessage {
   JsonSubTypes.Type(value = SelectAvatarRequest::class, name = "avatar"),
   JsonSubTypes.Type(value = IceServerListRequest::class, name = "ice_servers"),
   JsonSubTypes.Type(value = RestoreGameSessionRequest::class, name = "restore_game_session"),
-  JsonSubTypes.Type(value = PingMessage::class, name = "ping"),
-  JsonSubTypes.Type(value = PongMessage::class, name = "pong"),
+  JsonSubTypes.Type(value = ClientPingMessage::class, name = "ping"),
+  JsonSubTypes.Type(value = ClientPongMessage::class, name = "pong"),
   JsonSubTypes.Type(value = ClosePlayerGameRequest::class, name = "admin"),
   JsonSubTypes.Type(value = ClosePlayerLobbyRequest::class, name = "admin"),
   JsonSubTypes.Type(value = BroadcastRequest::class, name = "admin"),
@@ -73,8 +73,8 @@ interface ClientMessage : LobbyProtocolMessage
   JsonSubTypes.Type(value = PartyKick::class, name = "kicked_from_party"),
   JsonSubTypes.Type(value = SearchInfo::class, name = "search_info"),
   JsonSubTypes.Type(value = IrcPasswordInfo::class, name = "irc_password"),
-  JsonSubTypes.Type(value = PingMessage::class, name = "ping"),
-  JsonSubTypes.Type(value = PongMessage::class, name = "pong"),
+  JsonSubTypes.Type(value = ServerPingMessage::class, name = "ping"),
+  JsonSubTypes.Type(value = ServerPongMessage::class, name = "pong"),
   JsonSubTypes.Type(value = InvalidResponse::class, name = "invalid"),
   //GPG Server Messages
   JsonSubTypes.Type(value = HostGameGpgCommand::class, name = "HostGame"),
@@ -103,9 +103,9 @@ interface FafLobbyApi :
   val events: Flux<ServerMessage>
 
   /**
-   * Emits whenever the tcp connection is closed
+   * Emits whenever the tcp connection status changes
    */
-  val disconnects: Flux<Unit>
+  val connectionStatus: Flux<ConnectionStatus>
 }
 
 /// ****************

@@ -18,8 +18,11 @@ interface ConnectionApi {
   fun getIceServers(): Flux<IceServer>
 }
 
-class LoginException(reason: String?) : Exception(reason)
+class LoginException(reason: String?, throwable: Throwable? = null) : Exception(reason, throwable)
 
+enum class ConnectionStatus {
+  DISCONNECTED, CONNECTING, CONNECTED
+}
 
 // ***********************
 // *** SERVER MESSAGES ***
@@ -28,12 +31,12 @@ class LoginException(reason: String?) : Exception(reason)
 /**
  * Holds no data, just checks if the connection is still alive
  */
-internal class PingMessage : ServerMessage
+internal class ServerPingMessage : ServerMessage
 
 /**
  * Holds no data, just checks if the connection is still alive
  */
-internal class PongMessage : ServerMessage
+internal class ServerPongMessage : ServerMessage
 
 /**
  * Indicates the previous client message could not be parsed.
@@ -43,7 +46,7 @@ internal class InvalidResponse : ServerMessage
 
 /**
  * A general message from the server (automated or broadcast from admin) to display to the user.
- * FIXME: Should maybe offer event codes for translations inc ase of automated responses.
+ * FIXME: Should maybe offer event codes for translations in case of automated responses.
  */
 data class NoticeInfo(
   val style: String?,
@@ -164,4 +167,14 @@ internal data class SessionRequest(
  * Requests a list of ice servers, which will be returned as a [IceServerListResponse]
  */
 internal class IceServerListRequest : ClientMessage
+
+/**
+ * Holds no data, just checks if the connection is still alive
+ */
+internal class ClientPingMessage : ClientMessage
+
+/**
+ * Holds no data, just checks if the connection is still alive
+ */
+internal class ClientPongMessage : ClientMessage
 
