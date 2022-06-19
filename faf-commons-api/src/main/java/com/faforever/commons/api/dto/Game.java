@@ -4,12 +4,11 @@ import com.faforever.commons.api.elide.ElideEntity;
 import com.github.jasminb.jsonapi.annotations.Id;
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
+import java.time.OffsetDateTime;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
-import java.time.OffsetDateTime;
-import java.util.List;
 
 @Data
 @ToString(onlyExplicitlyIncluded = true)
@@ -24,7 +23,7 @@ public class Game implements ElideEntity {
   private Boolean replayAvailable;
   private OffsetDateTime startTime;
   private OffsetDateTime endTime;
-  private Integer replayTicks;
+  private Long replayTicks;
   private Validity validity;
   private VictoryCondition victoryCondition;
 
