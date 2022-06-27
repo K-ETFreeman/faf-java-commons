@@ -340,6 +340,7 @@ class FafLobbyClient(
 
   override fun restoreGameSession(gameId: Int) = send(RestoreGameSessionRequest(gameId))
 
+  @Deprecated("Ice Servers should be queried from the FAF API")
   override fun getIceServers(): Flux<IceServer> =
     Mono.fromCallable { send(IceServerListRequest()) }
       .thenMany(

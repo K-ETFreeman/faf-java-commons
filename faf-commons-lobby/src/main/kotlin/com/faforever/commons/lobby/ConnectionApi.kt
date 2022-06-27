@@ -120,6 +120,7 @@ data class LoginFailedResponse(
   val text: String?,
 ) : ServerMessage
 
+@Deprecated("Ice Servers should be queried from the FAF API")
 data class IceServer(
   val url: String?,
   val urls: Collection<String>?,
@@ -131,6 +132,7 @@ data class IceServer(
 /**
  * List of ice servers from the lobby server
  */
+@Deprecated("Ice Servers should be queried from the FAF API")
 data class IceServerListResponse(
   @JsonProperty("ice_servers")
   val iceServers: Collection<IceServer>,
@@ -166,6 +168,7 @@ internal data class SessionRequest(
 /**
  * Requests a list of ice servers, which will be returned as a [IceServerListResponse]
  */
+@Deprecated("Ice Servers should be queried from the FAF API")
 internal class IceServerListRequest : ClientMessage
 
 /**

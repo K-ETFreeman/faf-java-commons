@@ -5,15 +5,14 @@ import com.github.jasminb.jsonapi.annotations.Type;
 import com.github.rutledgepaulv.qbuilders.builders.QBuilder;
 import com.github.rutledgepaulv.qbuilders.conditions.Condition;
 import com.github.rutledgepaulv.qbuilders.visitors.RSQLVisitor;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 /***
  * A utility class to build JSON-API / Elide-compatible URLs with include, filtering and sorting
@@ -127,7 +126,7 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
    */
   @Override
   public ElideNavigatorOnCollection<T> setFilter(@NotNull Condition<?> eq) {
-    log.trace("filter set: {}", eq);
+    log.trace("filter set: {}", eq.query(new RSQLVisitor()));
     filterCondition = Optional.of(eq);
     return this;
   }
