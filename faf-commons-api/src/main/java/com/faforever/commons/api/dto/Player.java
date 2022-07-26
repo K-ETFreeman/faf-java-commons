@@ -50,6 +50,10 @@ public class Player extends AbstractEntity<Player> {
   @RestrictedVisibility("IsModerator")
   private Set<UniqueId> uniqueIds;
 
+  @Relationship("accountLinks")
+  @RestrictedVisibility("IsModerator")
+  private Set<AccountLink> accountLinks;
+
   @Relationship("bans")
   @RestrictedVisibility("IsModerator")
   private List<BanInfo> bans;
