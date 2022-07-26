@@ -11,7 +11,7 @@ import lombok.ToString;
 @Data
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
-@Type("uniqueId")
+@Type("accountLink")
 @RestrictedVisibility("IsModerator")
 public class AccountLink {
   @Id
