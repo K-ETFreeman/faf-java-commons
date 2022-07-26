@@ -1,6 +1,7 @@
 package com.faforever.commons.api.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.github.jasminb.jsonapi.annotations.Id;
 import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.Data;
@@ -20,14 +21,15 @@ public class AccountLink {
   @ToString.Include
   private LinkedServiceType serviceType;
   private String serviceId;
-  @JsonProperty("public")
   private boolean public_;
   private boolean ownership;
 
+  @JsonGetter("public")
   public boolean isPublic() {
     return public_;
   }
 
+  @JsonSetter("public")
   public void setPublic(boolean public_) {
     this.public_ = public_;
   }
