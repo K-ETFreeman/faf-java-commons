@@ -23,10 +23,6 @@ public class Player extends AbstractEntity<Player> {
   private String email;
   private String userAgent;
   @RestrictedVisibility("IsModerator")
-  private String steamId;
-  @RestrictedVisibility("IsModerator")
-  private String gogId;
-  @RestrictedVisibility("IsModerator")
   private String recentIpAddress;
   @RestrictedVisibility("IsModerator")
   private OffsetDateTime lastLogin;

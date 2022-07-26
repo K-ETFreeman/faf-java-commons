@@ -1,6 +1,7 @@
 package com.faforever.commons.api.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.github.jasminb.jsonapi.annotations.Id;
 import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -12,6 +13,7 @@ import lombok.ToString;
 @Type("uniqueId")
 @RestrictedVisibility("IsModerator")
 public class AccountLink {
+  @Id
   @ToString.Include
   private String id;
   private Player user;
