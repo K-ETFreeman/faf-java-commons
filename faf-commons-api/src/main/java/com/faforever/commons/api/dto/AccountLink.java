@@ -21,4 +21,12 @@ public class AccountLink {
   @JsonProperty("public")
   private boolean public_;
   private boolean ownership;
+
+  public boolean isPublic() {
+    return public_;
+  }
+
+  public void setPublic(boolean public_) {
+    this.public_ = public_;
+  }
 }
