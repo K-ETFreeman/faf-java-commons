@@ -17,7 +17,6 @@ public class AccountLink {
   @Id
   @ToString.Include
   private String id;
-  private Player user;
   @ToString.Include
   private LinkedServiceType serviceType;
   private String serviceId;
