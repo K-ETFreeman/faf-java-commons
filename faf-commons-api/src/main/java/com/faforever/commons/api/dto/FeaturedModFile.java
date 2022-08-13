@@ -25,4 +25,10 @@ public class FeaturedModFile implements ElideEntity {
   private String md5;
   @ToString.Include
   private String url;
+  @ToString.Include
+  private String cacheableUrl;
+  @ToString.Include
+  private String hmacToken;
+  @ToString.Include
+  private String hmacParameter;
 }
