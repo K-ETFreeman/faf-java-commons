@@ -14,6 +14,7 @@ import lombok.ToString;
 public class League extends AbstractEntity<League> {
   @ToString.Include
   private String technicalName;
+  private boolean enabled;
   private String nameKey;
   private String descriptionKey;
 }
