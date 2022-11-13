@@ -218,6 +218,7 @@ class ServerMessageTest {
         mapOf(),
         null,
         null,
+        null,
         false,
         null
       ), result

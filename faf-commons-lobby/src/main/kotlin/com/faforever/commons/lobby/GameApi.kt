@@ -145,7 +145,10 @@ data class GameInfo(
   val mapFilePath: String?,
   @JsonProperty("launched_at")
   val launchedAt: Double?,
+  @Deprecated("Use teamIds instead")
   val teams: Map<String, List<String>>?,
+  @JsonProperty("teams_ids")
+  val teamIds: List<TeamIds>?,
   @JsonProperty("rating_min")
   val ratingMin: Int?,
   @JsonProperty("rating_max")
@@ -154,7 +157,14 @@ data class GameInfo(
   val enforceRatingRange: Boolean?,
 
   val games: List<GameInfo>?,
-) : ServerMessage
+) : ServerMessage {
+  data class TeamIds (
+    @JsonProperty("team_id")
+    val teamId: Int,
+    @JsonProperty("player_ids")
+    val playerIds: List<Int>
+  )
+}
 
 /**
  * Message from server containing necessary info to launch a multiplayer game

@@ -5,7 +5,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_OUT
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  kotlin("jvm") version "1.4.30"
+  kotlin("jvm") version "1.7.0"
   kotlin("plugin.spring") version "1.4.30"
 }
 
@@ -40,6 +40,5 @@ tasks.withType<KotlinCompile> {
   kotlinOptions {
     freeCompilerArgs = listOf("-Xjsr305=strict")
     jvmTarget = "11"
-    useIR = true
   }
 }
