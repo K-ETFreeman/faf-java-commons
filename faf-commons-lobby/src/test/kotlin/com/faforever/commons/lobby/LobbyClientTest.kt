@@ -397,18 +397,6 @@ class LobbyClientTest {
   }
 
   @Test
-  fun testReadyParty() {
-    val stepVerifier = StepVerifier.create(serverMessagesReceived.take(1))
-      .assertNext { assertCommandMatch(it, ReadyPartyRequest()) }
-      .expectComplete()
-      .verifyLater()
-
-    instance.readyParty()
-
-    stepVerifier.verify(verificationDuration)
-  }
-
-  @Test
   fun testUnreadyParty() {
     val stepVerifier = StepVerifier.create(serverMessagesReceived.take(1))
       .assertNext { assertCommandMatch(it, UnreadyPartyRequest()) }

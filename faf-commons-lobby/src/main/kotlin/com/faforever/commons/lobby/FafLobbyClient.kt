@@ -370,6 +370,8 @@ class FafLobbyClient(
         .flatMapIterable { it.avatarList }
     )
 
+  override fun sendReady(requestId: String) = send(IsReadyResponse(requestId))
+
   override fun requestMatchmakerInfo() = send(MatchmakerInfoRequest())
 
   override fun gameMatchmaking(queueName: String, state: MatchmakerState) =
@@ -380,8 +382,6 @@ class FafLobbyClient(
   override fun acceptPartyInvite(playerId: Int) = send(AcceptInviteToPartyRequest(playerId))
 
   override fun kickPlayerFromParty(playerId: Int) = send(KickPlayerFromPartyRequest(playerId))
-
-  override fun readyParty() = send(ReadyPartyRequest())
 
   override fun unreadyParty() = send(UnreadyPartyRequest())
 

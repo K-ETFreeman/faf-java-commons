@@ -199,14 +199,6 @@ class ClientMessageTest {
   }
 
   @Test
-  fun serializeReadyPartyRequest() {
-    JSONAssert.assertEquals("""
-    {"command":"ready_party"}
-    """,
-   objectMapper.writeValueAsString(ReadyPartyRequest()), true)
-  }
-
-  @Test
   fun serializeUnreadyPartyRequest() {
     JSONAssert.assertEquals("""
     {"command":"unready_party"}

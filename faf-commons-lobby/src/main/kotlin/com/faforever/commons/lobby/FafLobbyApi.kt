@@ -42,12 +42,12 @@ interface LobbyProtocolMessage {
   JsonSubTypes.Type(value = AcceptInviteToPartyRequest::class, name = "accept_party_invite"),
   JsonSubTypes.Type(value = KickPlayerFromPartyRequest::class, name = "kick_player_from_party"),
   JsonSubTypes.Type(value = LeavePartyRequest::class, name = "leave_party"),
-  JsonSubTypes.Type(value = ReadyPartyRequest::class, name = "ready_party"),
   JsonSubTypes.Type(value = UnreadyPartyRequest::class, name = "unready_party"),
   JsonSubTypes.Type(value = SelectPartyFactionsRequest::class, name = "set_party_factions"),
   JsonSubTypes.Type(value = GameMatchmakingRequest::class, name = "game_matchmaking"),
   JsonSubTypes.Type(value = MatchmakerInfoRequest::class, name = "matchmaker_info"),
   JsonSubTypes.Type(value = AuthenticateRequest::class, name = "auth"),
+  JsonSubTypes.Type(value = IsReadyResponse::class, name = "is_ready_response"),
   // GPG Client Messages not directly instantiated they are only forwarded from the game so are serialized directly
 )
 interface ClientMessage : LobbyProtocolMessage
@@ -82,6 +82,7 @@ interface ClientMessage : LobbyProtocolMessage
   JsonSubTypes.Type(value = ConnectToPeerGpgCommand::class, name = "ConnectToPeer"),
   JsonSubTypes.Type(value = IceMsgGpgCommand::class, name = "IceMsg"),
   JsonSubTypes.Type(value = DisconnectFromPeerGpgCommand::class, name = "DisconnectFromPeer"),
+  JsonSubTypes.Type(value = IsReadyRequest::class, name = "is_ready"),
 )
 interface ServerMessage : LobbyProtocolMessage
 
