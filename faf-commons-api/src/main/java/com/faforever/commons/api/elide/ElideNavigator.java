@@ -5,14 +5,14 @@ import com.github.jasminb.jsonapi.annotations.Type;
 import com.github.rutledgepaulv.qbuilders.builders.QBuilder;
 import com.github.rutledgepaulv.qbuilders.conditions.Condition;
 import com.github.rutledgepaulv.qbuilders.visitors.RSQLVisitor;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.StringJoiner;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.LinkedHashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.StringJoiner;
 
 /***
  * A utility class to build JSON-API / Elide-compatible URLs with include, filtering and sorting
@@ -22,10 +22,9 @@ import org.jetbrains.annotations.NotNull;
 public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSelector<T>, ElideNavigatorOnId<T>, ElideNavigatorOnCollection<T> {
   @Getter
   private final Class<T> dtoClass;
-  private final List<String> includes = new ArrayList<>();
-  private final List<String> sorts = new ArrayList<>();
+  private final Set<String> includes = new LinkedHashSet<>();
+  private final Set<String> sorts = new LinkedHashSet<>();
   private final Optional<ElideNavigator<?>> parentNavigator;
-  private String parentName = null;
   private Optional<String> id = Optional.empty();
   private Optional<String> relationship = Optional.empty();
   private Optional<Condition<?>> filterCondition = Optional.empty();
@@ -38,10 +37,9 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
     this.parentNavigator = Optional.empty();
   }
 
-  private ElideNavigator(@NotNull Class<T> dtoClass, @NotNull ElideNavigator<?> parentNavigator, @NotNull String parentName) {
+  private ElideNavigator(@NotNull Class<T> dtoClass, @NotNull ElideNavigator<?> parentNavigator) {
     this.dtoClass = dtoClass;
     this.parentNavigator = Optional.of(parentNavigator);
-    this.parentName = parentName;
   }
 
   public static <T extends QBuilder<T>> QBuilder<T> qBuilder() {
@@ -82,8 +80,6 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
 
   /**
    * Point to a collection of type T
-   *
-   * @return
    */
   @Override
   public ElideNavigatorOnCollection<T> collection() {
@@ -92,7 +88,6 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
 
   /**
    * Add an include to an ElideNavigator
-   * Important: ElideNavigator takes care of referencing to the correct parent relationships. Just use a relative include.
    */
   @Override
   public ElideNavigator<T> addInclude(@NotNull String include) {
@@ -103,9 +98,12 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
 
   @Override
   public <R extends ElideEntity> ElideNavigatorSelector<R> navigateRelationship(@NotNull Class<R> dtoClass, @NotNull String name) {
+    if (!includes.isEmpty()) {
+      throw new IllegalStateException("Cannot navigate relationship with includes on parent");
+    }
     log.trace("relationship added: {}", name);
     this.relationship = Optional.of(name);
-    return new ElideNavigator<>(dtoClass, this, name);
+    return new ElideNavigator<>(dtoClass, this);
   }
 
   /**
@@ -122,7 +120,6 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
 
   /**
    * Add a filter to a collection-pointed ElideNavigator
-   * Important: ElideNavigator takes care of referencing to the correct parent relationships. Just use a relative include.
    */
   @Override
   public ElideNavigatorOnCollection<T> setFilter(@NotNull Condition<?> eq) {
@@ -157,21 +154,14 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
     return this;
   }
 
-  private String pathToRoot() {
-    return parentNavigator.map(parent -> parent.pathToRoot() + parent.parentName + ".").orElse("");
-  }
-
   @Override
   public String build() {
     String dtoPath = dtoClass.getDeclaredAnnotation(Type.class).value();
 
-    StringJoiner queryArgs = new StringJoiner("&", "?", "")
-      .setEmptyValue("");
+    StringJoiner queryArgs = new StringJoiner("&", "?", "").setEmptyValue("");
 
     if (includes.size() > 0) {
-      queryArgs.add(String.format("include=%s", includes.stream()
-        .map(s -> pathToRoot() + s)
-        .collect(Collectors.joining(","))));
+      queryArgs.add(String.format("include=%s", String.join(",", includes)));
     }
 
     filterCondition.ifPresent(cond -> queryArgs.add(String.format("filter=%s", cond.query(new RSQLVisitor()))));
@@ -188,11 +178,10 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
       }
     });
 
-    String route = parentNavigator.map(ElideNavigator::build)
-      .orElse("/data/" + dtoPath) +
-      id.map(i -> "/" + i).orElse("") +
-      relationship.map(r -> "/" + r).orElse("") +
-      queryArgs;
+    String route = parentNavigator.map(ElideNavigator::build).orElse("/data/" + dtoPath) +
+                   id.map(i -> "/" + i).orElse("") +
+                   relationship.map(r -> "/" + r).orElse("") +
+                   queryArgs;
     log.trace("Route built: {}", route);
     return route;
   }
