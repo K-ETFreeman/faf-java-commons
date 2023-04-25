@@ -8,17 +8,17 @@ import java.util.stream.Collectors;
 
 public class ApiException extends RuntimeException {
 
-    private final List<Error> errors;
+  private final List<Error> errors;
 
-    public ApiException(List<Error> errors) {
-        this.errors = errors;
-    }
+  public ApiException(List<Error> errors) {
+    super(errors.stream().map(Error::getDetail).collect(Collectors.joining("\n")));
+    this.errors = errors;
+  }
 
-    @Override
-    public String getLocalizedMessage() {
-        // TODO localize
-        return errors.stream()
-                .map(Error::getDetail)
-                .collect(Collectors.joining("\n"));
-    }
+
+  @Override
+  public String getLocalizedMessage() {
+    // TODO localize
+    return errors.stream().map(Error::getDetail).collect(Collectors.joining("\n"));
+  }
 }
