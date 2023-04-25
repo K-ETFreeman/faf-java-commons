@@ -70,6 +70,14 @@ public class ElideNavigator<T extends ElideEntity> implements ElideNavigatorSele
   }
 
   /**
+   * Test if this navigator points to root endpoint
+   */
+  @Override
+  public boolean isRoot() {
+    return parentNavigator.isEmpty();
+  }
+
+  /**
    * Point to a certain id of entity type T
    */
   @Override

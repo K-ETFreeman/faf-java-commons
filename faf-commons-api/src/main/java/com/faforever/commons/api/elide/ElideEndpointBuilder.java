@@ -6,4 +6,6 @@ public interface ElideEndpointBuilder<T extends ElideEntity> {
   Class<T> getDtoClass();
 
   ElideEndpointBuilder<T> addInclude(String include);
+
+  boolean isRoot();
 }

@@ -10,6 +10,7 @@ import static com.faforever.commons.api.elide.ElideNavigator.qBuilder;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ElideNavigatorTest {
   @Test
@@ -104,6 +105,44 @@ class ElideNavigatorTest {
     Condition<?> condition = qBuilder().string("test").eq("test");
     navigator.setFilter(condition);
     assertThat(navigator.getFilter().get(), is(condition));
+  }
+
+  @Test
+  void testCannotNavigateAfterIncludes() {
+    assertThrows(IllegalStateException.class, () -> ElideNavigator.of(MapPoolAssignment.class)
+                                                                  .id("1")
+                                                                  .addInclude("mapVersion")
+                                                                  .navigateRelationship(MapVersion.class, "mapVersion"));
+  }
+
+  @Test
+  void testIsRootCollection() {
+    ElideNavigatorOnCollection<MapPoolAssignment> navigator = ElideNavigator.of(MapPoolAssignment.class).collection();
+    assertThat(navigator.isRoot(), is(true));
+  }
+
+  @Test
+  void testIsRootId() {
+    ElideNavigatorOnId<MapPoolAssignment> navigator = ElideNavigator.of(MapPoolAssignment.class).id("1");
+    assertThat(navigator.isRoot(), is(true));
+  }
+
+  @Test
+  void testIsNotRootCollection() {
+    ElideNavigatorOnCollection<MapVersion> navigator = ElideNavigator.of(MapPoolAssignment.class)
+                                                                     .id("1")
+                                                                     .navigateRelationship(MapVersion.class, "mapVersion")
+                                                                     .collection();
+    assertThat(navigator.isRoot(), is(false));
+  }
+
+  @Test
+  void testIsNotRootId() {
+    ElideNavigatorOnId<MapVersion> navigator = ElideNavigator.of(MapPoolAssignment.class)
+                                                             .id("1")
+                                                             .navigateRelationship(MapVersion.class, "mapVersion")
+                                                             .id("1");
+    assertThat(navigator.isRoot(), is(false));
   }
 
 }
