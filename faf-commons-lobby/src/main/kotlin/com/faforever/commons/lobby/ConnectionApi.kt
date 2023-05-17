@@ -11,7 +11,7 @@ import reactor.core.publisher.Mono
  */
 interface ConnectionApi {
 
-  fun connectAndLogin(config: FafLobbyClient.Config): Mono<LoginSuccessResponse>
+  fun connectAndLogin(config: FafLobbyClient.Config): Mono<Player>
 
   fun disconnect()
 
@@ -63,13 +63,6 @@ data class SessionResponse(
 ) : ServerMessage
 
 /**
- * The server confirms a successful login and sends us our player info
- */
-data class LoginSuccessResponse(
-  val me: Player,
-) : ServerMessage
-
-/**
  * Randomly assigned password to login into the irc
  */
 data class IrcPasswordInfo(
@@ -112,13 +105,22 @@ data class Player(
   }
 }
 
+sealed interface LoginResponse : ServerMessage
+
+/**
+ * The server confirms a successful login and sends us our player info
+ */
+data class LoginSuccessResponse(
+  val me: Player,
+) : LoginResponse
+
 /**
  * Response if the login failed with an all english response on what failed.
  * FIXME: This should send error codes instead of translated text.
  */
 data class LoginFailedResponse(
   val text: String?,
-) : ServerMessage
+) : LoginResponse
 
 @Deprecated("Ice Servers should be queried from the FAF API")
 data class IceServer(

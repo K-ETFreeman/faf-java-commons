@@ -1,5 +1,6 @@
 package com.faforever.commons.lobby
 
+import ch.qos.logback.classic.Level
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
@@ -8,6 +9,7 @@ import io.netty.handler.codec.LineBasedFrameDecoder
 import io.netty.handler.codec.string.LineEncoder
 import io.netty.handler.codec.string.LineSeparator
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.skyscreamer.jsonassert.JSONAssert
@@ -29,10 +31,17 @@ import java.time.temporal.ChronoUnit
 
 class LobbyClientTest {
   companion object {
-    val TIMEOUT: Long = 5000;
+    val TIMEOUT: Long = 10000;
     val TIMEOUT_UNIT = ChronoUnit.MILLIS
     val LOOPBACK_ADDRESS = InetAddress.getLoopbackAddress()
     val LOG: Logger = LoggerFactory.getLogger(FafLobbyClient::class.java)
+
+    @JvmStatic
+    @BeforeAll
+    fun setLogLevel(): Unit {
+      val lobbyLogger = LoggerFactory.getLogger("com.faforever.commons.lobby") as ch.qos.logback.classic.Logger
+      lobbyLogger.level = Level.TRACE
+    }
   }
 
   private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule())
@@ -67,8 +76,8 @@ class LobbyClientTest {
       .doOnConnection {
         LOG.debug("New Client connected to server")
         currentConnection = it
-        it.addHandler(LineEncoder(LineSeparator.UNIX)) // TODO: This is not working. Raise a bug ticket! Workaround below
-          .addHandler(LineBasedFrameDecoder(1024 * 1024))
+        it.addHandlerFirst(LineEncoder(LineSeparator.UNIX)) // TODO: This is not working. Raise a bug ticket! Workaround below
+          .addHandlerLast(LineBasedFrameDecoder(1024 * 1024))
       }.doOnBound { disposableServer: DisposableServer ->
         LOG.debug(
           "Fake server listening at {} on port {}",
@@ -527,6 +536,30 @@ class LobbyClientTest {
       .verify(verificationDuration)
 
     stepVerifierServer.verify(verificationDuration)
+  }
+
+  @Test
+  fun testOnlySingleConnect() {
+    val config = FafLobbyClient.Config(
+      Mono.just(token),
+      "0",
+      "downlords-faf-client",
+      disposableServer.host(),
+      disposableServer.port(),
+      { "abc" },
+      1024 * 1024,
+      false,
+      5,
+      5
+    )
+
+    val verifyLater = StepVerifier.create(serverMessagesReceived.take(Duration.ofSeconds(5)))
+      .expectComplete()
+      .verifyLater();
+
+    StepVerifier.create(instance.connectAndLogin(config)).expectNextCount(1).verifyComplete()
+
+    verifyLater.verify()
   }
 
   @Test
