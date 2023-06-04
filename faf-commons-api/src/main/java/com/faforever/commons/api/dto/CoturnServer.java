@@ -7,6 +7,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import java.net.URI;
+import java.util.Set;
+
 @Data
 @ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -17,8 +20,9 @@ public class CoturnServer implements ElideEntity {
   @EqualsAndHashCode.Include
   private String id;
   private String region;
-  private String host;
-  private Integer port;
-  private String key;
-  private Boolean active;
+  private boolean active;
+  private Set<URI> urls;
+  private String username;
+  private String credential;
+  private String credentialType;
 }

@@ -8,7 +8,8 @@ buildscript {
   }
 }
 
-tasks.withType(Test) {
+// source: https://github.com/mendhak/Gradle-Travis-Colored-Output/blob/master/ColoredOutput.gradle
+tasks.withType(Test).configureEach {
 
   String ANSI_BOLD_WHITE = "\u001B[0;1m";
   String ANSI_RESET = "\u001B[0m";
@@ -43,7 +44,7 @@ tasks.withType(Test) {
 
 
       def nameParts = descriptor.parent.name.split("\\.")
-      def simpleParentName  = nameParts[nameParts.length - 1]
+      def simpleParentName = nameParts[nameParts.length - 1]
 
       out.println()
       out.println(simpleParentName + " > " + descriptor.name + " STANDARD_OUT")
@@ -77,7 +78,6 @@ tasks.withType(Test) {
       out.println("--------------------------------------------------------------------------");
     }
   }
-
 }
 
 subprojects {
