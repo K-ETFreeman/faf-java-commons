@@ -18,6 +18,7 @@ public class Mod extends AbstractEntity<Mod> {
   private String displayName;
   @ToString.Include
   private String author;
+  private String repositoryUrl;
 
   @Relationship("uploader")
   @ToString.Include
@@ -31,4 +32,7 @@ public class Mod extends AbstractEntity<Mod> {
 
   @Relationship("reviewsSummary")
   private ModReviewsSummary modReviewsSummary;
+
+  @Relationship("license")
+  private License license;
 }

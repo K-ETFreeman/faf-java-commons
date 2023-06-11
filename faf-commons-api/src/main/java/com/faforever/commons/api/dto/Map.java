@@ -39,4 +39,7 @@ public class Map extends AbstractEntity<Map> {
 
   @Relationship("reviewsSummary")
   private MapReviewsSummary mapReviewsSummary;
+
+  @Relationship("license")
+  private License license;
 }
