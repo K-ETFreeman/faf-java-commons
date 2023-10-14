@@ -16,7 +16,8 @@ import reactor.core.publisher.Sinks.EmitFailureHandler
 import reactor.core.publisher.Sinks.EmitResult
 import reactor.core.scheduler.Schedulers
 import reactor.netty.Connection
-import reactor.netty.tcp.TcpClient
+import reactor.netty.http.client.HttpClient
+import reactor.netty.http.client.WebsocketClientSpec
 import reactor.util.retry.Retry
 import reactor.util.retry.Retry.RetrySignal
 import java.net.InetSocketAddress
@@ -35,8 +36,7 @@ class FafLobbyClient(
     val tokenMono: Mono<String>,
     val version: String,
     val userAgent: String,
-    val host: String,
-    val port: Int,
+    val url: String,
     val generateUid: Function<Long, String>,
     val bufferSize: Int,
     val wiretap: Boolean = false,
@@ -46,6 +46,7 @@ class FafLobbyClient(
 
   private lateinit var config: Config
 
+  private var connectionDisposable: Disposable? = null
   private var connection: Connection? = null
   private var pingDisposable: Disposable? = null
   private var connecting: Boolean = false
@@ -59,9 +60,11 @@ class FafLobbyClient(
   private val eventSink: Sinks.Many<ServerMessage> = Sinks.many().unicast().onBackpressureBuffer()
   private val rawEvents = eventSink.asFlux().publish().autoConnect()
   private val connectionStatusSink: Sinks.Many<ConnectionStatus> = Sinks.many().unicast().onBackpressureBuffer()
-  override val connectionStatus = connectionStatusSink.asFlux().publish().autoConnect()
+  override val connectionStatus: Flux<ConnectionStatus> = connectionStatusSink.asFlux().publish().autoConnect()
+  private val connectionAcquiredSink: Sinks.Many<Any> = Sinks.many().unicast().onBackpressureBuffer()
+  private val connectionAcquired: Flux<Any> = connectionAcquiredSink.asFlux().publish().autoConnect()
 
-  override val events = rawEvents.filter {
+  override val events: Flux<ServerMessage> = rawEvents.filter {
     it !is ServerPingMessage &&
       it !is ServerPongMessage &&
       it !is SessionResponse &&
@@ -70,27 +73,28 @@ class FafLobbyClient(
   }
 
   private val loginResponseMono = rawEvents.ofType(LoginResponse::class.java).next().flatMap {
-      when (it) {
-        is LoginSuccessResponse -> Mono.just(it.me)
-        is LoginFailedResponse -> Mono.error(LoginException(it.text))
-      }
-    }.timeout(Duration.ofMinutes(1))
+    when (it) {
+      is LoginSuccessResponse -> Mono.just(it.me)
+      is LoginFailedResponse -> Mono.error(LoginException(it.text))
+    }
+  }.timeout(Duration.ofSeconds(30))
     .doOnError(LoginException::class.java) { kicked = true }
-    .doOnSubscribe {
+    .doFirst {
       prepareAuthenticateOnNextSession()
       send(SessionRequest(config.version, config.userAgent))
     }
 
   private val loginMono = Mono.defer {
-    openConnection()
-      .then(loginResponseMono)
-      .retryWhen(createRetrySpec(config))
+    connectionAcquired.next().then(loginResponseMono).doFirst {
+      openConnection()
+    }.retryWhen(createRetrySpec(config))
   }
     .doOnError { LOG.error("Error during connection", it); connection?.dispose() }
     .doOnCancel { LOG.debug("Login cancelled"); disconnect() }
     .doOnSuccess {
       connectionStatusSink.emitNext(ConnectionStatus.CONNECTED, retrySerialFailure)
     }
+    .doOnSubscribe { LOG.debug("Starting login process") }
     .materialize()
     .cacheInvalidateIf { it.isOnError || (!connecting && (connection == null || connection?.isDisposed == true)) }
     .dematerialize<Player>()
@@ -101,7 +105,7 @@ class FafLobbyClient(
       (emitResult == EmitResult.FAIL_NON_SERIALIZED)
     }
 
-  private val client = TcpClient.newConnection()
+  private val httpClient = HttpClient.newConnection()
     .resolver(DefaultAddressResolverGroup.INSTANCE)
     .doOnResolveError { connection, throwable ->
       LOG.error("Could not find server", throwable)
@@ -115,6 +119,7 @@ class FafLobbyClient(
       it.addHandlerFirst(LineEncoder(LineSeparator.UNIX)) // TODO: This is not working. Raise a bug ticket! Workaround below
         .addHandlerLast(LineBasedFrameDecoder(config.bufferSize))
       connection = it
+      connectionAcquiredSink.emitNext(true, retrySerialFailure)
     }.doOnDisconnected {
       LOG.info("Disconnected from server")
       it.dispose()
@@ -143,14 +148,19 @@ class FafLobbyClient(
     }.subscribe()
   }
 
-  private fun openConnection(): Mono<out Connection> {
-    return client
+  private fun openConnection() {
+    LOG.debug("Opening connection")
+    connectionDisposable?.dispose()
+    connectionDisposable = httpClient
       .wiretap(config.wiretap)
-      .host(config.host)
-      .port(config.port)
+      .websocket(WebsocketClientSpec.builder().maxFramePayloadLength(config.bufferSize).build())
+      .uri(config.url)
       .handle { inbound, outbound ->
         val inboundMono = inbound.receive()
           .asString(Charsets.UTF_8)
+          .flatMapIterable { it.toCharArray().asIterable() }
+          .windowUntil { '\n' == it }
+          .flatMap { it.collectList().map { chars -> chars.toCharArray() }.map { charArray -> String(charArray) } }
           .doOnError { LOG.error("Inbound channel closed with error", it) }
           .doOnComplete { LOG.info("Inbound channel closed") }
           .doOnCancel { LOG.info("Inbound channel cancelled") }
@@ -211,15 +221,38 @@ class FafLobbyClient(
                 Mono.empty()
               }
             }
-        ).then()
+        ).neverComplete()
 
         /* The lobby protocol requires two-way communication. If either the outbound or inbound connections complete/close
            then we are better off closing the connection to the server. This is why we return a mono that completes when one
            of the connections finishes */
         Mono.firstWithSignal(inboundMono, outboundMono)
       }
-      .connect()
-      .doOnSubscribe { connectionStatusSink.emitNext(ConnectionStatus.CONNECTING, retrySerialFailure) }
+      .doOnCancel { LOG.info("Connection cancelled") }
+      .doOnSubscribe {
+        LOG.debug("Beginning connection process")
+        connectionStatusSink.emitNext(ConnectionStatus.CONNECTING, retrySerialFailure)
+      }
+      .retryWhen(Retry.fixedDelay(5, Duration.ofSeconds(config.retryWaitSeconds / 5))
+        .doBeforeRetry { retry: RetrySignal ->
+          LOG.warn(
+            "Could not connect to server retrying: Attempt #{} of 5",
+            retry.totalRetries(),
+            retry.failure()
+          )
+        }.onRetryExhaustedThrow { spec, retrySignal ->
+          LoginException(
+            "Could not connect to server after ${spec.maxAttempts} attempts",
+            retrySignal.failure()
+          )
+        })
+      .subscribe(null, {
+        LOG.warn("Error in connection", it)
+        connectionStatusSink.emitNext(ConnectionStatus.DISCONNECTED, retrySerialFailure)
+      }, {
+        LOG.info("Connection closed")
+        connectionStatusSink.emitNext(ConnectionStatus.DISCONNECTED, retrySerialFailure)
+      })
   }
 
   override fun connectAndLogin(config: Config): Mono<Player> {
@@ -267,6 +300,7 @@ class FafLobbyClient(
     }
 
   private fun send(message: ClientMessage) {
+    LOG.trace("Sending message of type {}", message.javaClass)
     outboundSink.emitNext(message, retrySerialFailure)
   }
 

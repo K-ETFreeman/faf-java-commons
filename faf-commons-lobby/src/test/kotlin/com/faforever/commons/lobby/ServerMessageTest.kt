@@ -8,8 +8,11 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.parallel.Execution
+import org.junit.jupiter.api.parallel.ExecutionMode
 import java.time.OffsetDateTime
 
+@Execution(ExecutionMode.CONCURRENT)
 class ServerMessageTest {
 
   companion object {

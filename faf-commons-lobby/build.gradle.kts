@@ -34,6 +34,8 @@ tasks.withType<Test> {
     showCauses = true
     showStackTraces = true
   }
+
+  systemProperties["junit.jupiter.execution.parallel.enabled"] = true
 }
 
 tasks.withType<KotlinCompile> {
