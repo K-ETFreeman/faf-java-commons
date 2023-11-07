@@ -38,6 +38,8 @@ public class GamePlayerStats implements ElideEntity {
   private byte score;
   @Nullable
   private OffsetDateTime scoreTime;
+  @ToString.Include
+  private GameOutcome result;
 
   @Relationship("game")
   @JsonIgnore
