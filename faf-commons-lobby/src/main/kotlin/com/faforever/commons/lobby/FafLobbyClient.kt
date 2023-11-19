@@ -85,9 +85,11 @@ class FafLobbyClient(
     }
 
   private val loginMono = Mono.defer {
-    connectionAcquired.next().then(loginResponseMono).doFirst {
-      openConnection()
-    }.retryWhen(createRetrySpec(config))
+    connectionAcquired.next().timeout(Duration.ofSeconds(config.retryWaitSeconds))
+      .then(loginResponseMono)
+      .doFirst {
+        openConnection()
+      }.retryWhen(createRetrySpec(config))
   }
     .doOnError { LOG.error("Error during connection", it); connection?.dispose() }
     .doOnCancel { LOG.debug("Login cancelled"); disconnect() }
