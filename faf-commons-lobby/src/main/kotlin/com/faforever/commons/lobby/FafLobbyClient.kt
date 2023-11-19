@@ -87,7 +87,7 @@ class FafLobbyClient(
   private val loginMono = Mono.defer {
     connectionAcquired.next().timeout(Duration.ofSeconds(config.retryWaitSeconds))
       .then(loginResponseMono)
-      .doFirst {
+      .doOnSubscribe {
         openConnection()
       }.retryWhen(createRetrySpec(config))
   }
