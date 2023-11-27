@@ -11,7 +11,6 @@ import io.netty.handler.codec.string.LineSeparator
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
@@ -26,7 +25,6 @@ import reactor.netty.DisposableServer
 import reactor.netty.NettyInbound
 import reactor.netty.NettyOutbound
 import reactor.netty.http.server.HttpServer
-import reactor.netty.tcp.TcpServer
 import reactor.test.StepVerifier
 import java.net.InetAddress
 import java.nio.charset.StandardCharsets
@@ -101,7 +99,7 @@ class LobbyClientTest {
   private fun assertCommandMatch(message: String, command: ClientMessage) = JSONAssert.assertEquals(objectMapper.writeValueAsString(command), message, true)
 
   private fun connectAndLogIn() {
-    val config = FafLobbyClient.Config(Mono.just(token), "0", "downlords-faf-client", url, { "abc" }, 1024 * 1024, false, 5, 5)
+    val config = FafLobbyClient.Config(token, "0", "downlords-faf-client", url, { "abc" }, 1024 * 1024, false)
 
     serverMessagesReceived.filter { commandMatches(it, "ask_session") }.next().doOnNext {
         val sessionMessage = SessionResponse(sessionId)
@@ -114,7 +112,7 @@ class LobbyClientTest {
         sendFromServer(loginServerMessage)
       }.subscribe()
 
-    val stepVerifier = StepVerifier.create(serverMessagesReceived.take(2)).assertNext { assertCommandMatch(it, SessionRequest(config.version, config.userAgent)) }.assertNext { assertCommandMatch(it, AuthenticateRequest(token, sessionId, config.generateUid.apply(sessionId))) }.expectComplete().verifyLater()
+    val stepVerifier = StepVerifier.create(serverMessagesReceived.take(2)).assertNext { assertCommandMatch(it, SessionRequest(config.version, config.userAgent)) }.assertNext { assertCommandMatch(it, AuthenticateRequest(token, sessionId, config.uidGenerator.apply(sessionId))) }.expectComplete().verifyLater()
 
     StepVerifier.create(instance.connectAndLogin(config)).expectNextCount(1).expectComplete().verify(verificationDuration)
 
@@ -376,9 +374,9 @@ class LobbyClientTest {
   fun testOnAuthenticationFailed() {
     instance.disconnect()
 
-    val config = FafLobbyClient.Config(Mono.just(token), "0", "downlords-faf-client", url, { "abc" }, 1024 * 1024, false, 5, 5)
+    val config = FafLobbyClient.Config(token, "0", "downlords-faf-client", url, { "abc" }, 1024 * 1024, false)
 
-    val stepVerifierServer = StepVerifier.create(serverMessagesReceived.take(2)).assertNext { assertCommandMatch(it, SessionRequest(config.version, config.userAgent)) }.assertNext { assertCommandMatch(it, AuthenticateRequest(token, sessionId, config.generateUid.apply(sessionId))) }.expectComplete().verifyLater()
+    val stepVerifierServer = StepVerifier.create(serverMessagesReceived.take(2)).assertNext { assertCommandMatch(it, SessionRequest(config.version, config.userAgent)) }.assertNext { assertCommandMatch(it, AuthenticateRequest(token, sessionId, config.uidGenerator.apply(sessionId))) }.expectComplete().verifyLater()
 
     serverMessagesReceived.filter { commandMatches(it, "ask_session") }.next().doOnNext {
         val sessionMessage = SessionResponse(sessionId)
@@ -393,32 +391,5 @@ class LobbyClientTest {
     StepVerifier.create(instance.connectAndLogin(config)).expectError(LoginException::class.java).verify(verificationDuration)
 
     stepVerifierServer.verify(verificationDuration)
-  }
-
-  @Test
-  fun testAutoReconnect() {
-    currentConnection.dispose()
-
-    val stepVerifier = StepVerifier.create(serverMessagesReceived.take(2)).assertNext { commandMatches(it, "ask_session") }.assertNext { commandMatches(it, "auth") }.expectComplete().verifyLater()
-
-    serverMessagesReceived.filter { commandMatches(it, "ask_session") }.next().doOnNext {
-        val sessionMessage = SessionResponse(sessionId)
-        sendFromServer(sessionMessage)
-      }.subscribe()
-
-    serverMessagesReceived.filter { commandMatches(it, "auth") }.next().doOnNext {
-        val me = Player(playerUid, "Junit", null, null, "", HashMap(), HashMap())
-        val loginServerMessage = LoginSuccessResponse(me)
-        sendFromServer(loginServerMessage)
-      }.subscribe()
-
-    stepVerifier.verify(verificationDuration)
-  }
-
-  @Test
-  fun testNoAutoReconnect() {
-    instance.disconnect()
-
-    StepVerifier.create(serverMessagesReceived.take(Duration.ofSeconds(5))).verifyComplete()
   }
 }
