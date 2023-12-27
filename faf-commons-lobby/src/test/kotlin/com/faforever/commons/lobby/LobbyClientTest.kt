@@ -107,7 +107,7 @@ class LobbyClientTest {
       }.subscribe()
 
     serverMessagesReceived.filter { commandMatches(it, "auth") }.next().doOnNext {
-        val me = Player(playerUid, "Junit", null, null, "", HashMap(), HashMap())
+        val me = Player(playerUid, "Junit", null, null, "", HashMap(), HashMap(), null)
         val loginServerMessage = LoginSuccessResponse(me)
         sendFromServer(loginServerMessage)
       }.subscribe()

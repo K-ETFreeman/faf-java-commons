@@ -1,6 +1,7 @@
 package com.faforever.commons.lobby
 
 import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonEnumDefaultValue
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonValue
 import reactor.core.publisher.Flux
@@ -79,6 +80,7 @@ data class Player(
   val country: String,
   val league: Map<String, String>?,
   val ratings: Map<String, LeaderboardStats>,
+  val state: State?,
 ) {
   data class Avatar(
     val url: String,
@@ -102,6 +104,15 @@ data class Player(
       @JsonValue
       fun toListFormat() : List<Float> = listOf(mean, deviation)
     }
+  }
+
+  enum class State {
+    @JsonProperty("unknown")
+    @JsonEnumDefaultValue
+    UNKNOWN,
+
+    @JsonProperty("offline")
+    OFFLINE,
   }
 }
 

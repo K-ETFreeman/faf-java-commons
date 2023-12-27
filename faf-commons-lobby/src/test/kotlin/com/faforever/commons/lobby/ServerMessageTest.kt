@@ -26,7 +26,7 @@ class ServerMessageTest {
   fun deserializeLoginResponse() {
     val result = objectMapper.readValue<ServerMessage>(
       """
-       {"command":"welcome","me":{"id":76365,"login":"Brutus5000","avatar":{"url":"https://content.faforever.com/faf/avatars/SystemSoftware.png","tooltip":"DevOps Councillor"},"country":"DE","ratings":{"global":{"rating":[1194.13,80.9685],"number_of_games":224}}}}
+       {"command":"welcome","me":{"id":76365,"login":"Brutus5000","avatar":{"url":"https://content.faforever.com/faf/avatars/SystemSoftware.png","tooltip":"DevOps Councillor"},"country":"DE","ratings":{"global":{"rating":[1194.13,80.9685],"number_of_games":224}},"state":"offline"}}
      """.trimIndent()
     )
     assertEquals(
@@ -39,8 +39,8 @@ class ServerMessageTest {
           "DE",
           null,
           mapOf(
-            "global" to Player.LeaderboardStats(224, Player.LeaderboardStats.LeaderboardRating(1194.13f, 80.9685f))
-          )
+            "global" to Player.LeaderboardStats(224, Player.LeaderboardStats.LeaderboardRating(1194.13f, 80.9685f))),
+          Player.State.OFFLINE
         )
       ), result
     )
@@ -58,11 +58,10 @@ class ServerMessageTest {
         listOf(
           Player(
             65341, "Sheikah", null, null, "US", null, mapOf(
-              "ladder_1v1" to Player.LeaderboardStats(
-                1725,
-                Player.LeaderboardStats.LeaderboardRating(1384.16f, 66.4747f)
-              )
-            )
+            "ladder_1v1" to Player.LeaderboardStats(
+              1725,
+              Player.LeaderboardStats.LeaderboardRating(1384.16f, 66.4747f)
+            )), null
           )
         )
       ), result
