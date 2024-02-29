@@ -34,3 +34,4 @@ pojo-tester = { module = "pl.pojo:pojo-tester", version = "0.7.6" }
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-plugin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+test-logger = { id = "com.adarshr.test-logger", version = "4.0.0" }

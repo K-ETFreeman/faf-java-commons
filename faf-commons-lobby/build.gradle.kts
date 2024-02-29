@@ -10,11 +10,17 @@ plugins {
 }
 
 version = "1.0.0-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_21
 
 dependencies {
   api(libs.reactor.core)
   implementation(libs.reactor.netty)
+  compileOnly(libs.slf4j.api)
+  compileOnly(libs.jackson.databind)
+
+  testImplementation(libs.junit.jupiter)
+  testImplementation(libs.hamcrest.core)
+  testImplementation(libs.mockito.core)
+  testImplementation(libs.mockito.junit.jupiter)
   testImplementation(libs.reactor.test)
   testImplementation(libs.logback.classic)
   testImplementation(libs.slf4j.api)
