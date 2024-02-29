@@ -21,6 +21,7 @@ dependencies {
   testImplementation(libs.jackson.core)
   testImplementation(libs.jackson.module.kotlin)
   testImplementation(libs.jackson.datatype.jsr310)
+  testImplementation(libs.jsonassert)
 }
 
 tasks.withType<Test> {

@@ -36,22 +36,13 @@ subprojects {
   }
 
   dependencies {
-    annotationProcessor(libs.lombok)
-    compileOnly(libs.lombok)
-    compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.jackson.databind)
-    annotationProcessor(libs.slf4j.api)
     compileOnly(libs.slf4j.api)
-
-    testAnnotationProcessor(libs.lombok)
-    testCompileOnly(libs.lombok)
-    testCompileOnly(libs.jetbrains.annotations)
 
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.hamcrest.core)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.junit.jupiter)
-    testImplementation(libs.jsonassert)
   }
 
   test {
