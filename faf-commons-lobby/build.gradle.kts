@@ -5,23 +5,22 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_OUT
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  kotlin("jvm") version "1.7.0"
-  kotlin("plugin.spring") version "1.4.30"
+  alias(libs.plugins.kotlin.jvm)
+  alias(libs.plugins.kotlin.plugin.spring)
 }
 
 version = "1.0.0-SNAPSHOT"
 java.sourceCompatibility = JavaVersion.VERSION_11
 
 dependencies {
-  implementation("io.projectreactor.netty:reactor-netty:1.1.6")
-  api("io.projectreactor:reactor-core:3.5.5")
-  testImplementation("io.projectreactor:reactor-test:3.4.3")
-  testImplementation("ch.qos.logback:logback-classic:1.2.9")
-  testImplementation("org.slf4j:slf4j-api:1.7.25")
-  val jacksonVersion = "2.12.2"
-  testImplementation("com.fasterxml.jackson.core:jackson-core:${jacksonVersion}")
-  testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:${jacksonVersion}")
-  testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}")
+  api(libs.reactor.core)
+  implementation(libs.reactor.netty)
+  testImplementation(libs.reactor.test)
+  testImplementation(libs.logback.classic)
+  testImplementation(libs.slf4j.api)
+  testImplementation(libs.jackson.core)
+  testImplementation(libs.jackson.module.kotlin)
+  testImplementation(libs.jackson.datatype.jsr310)
 }
 
 tasks.withType<Test> {
