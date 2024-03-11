@@ -19,7 +19,7 @@ reactor-core = { module = "io.projectreactor:reactor-core", version.ref = "react
 reactor-netty = { module = "io.projectreactor.netty:reactor-netty", version = "1.1.16" }
 luaj-jse = { module = "org.luaj:luaj-jse", version = "3.0.1" }
 zstd-jni = { module = "com.github.luben:zstd-jni", version = "1.5.2-5" } # >=1.5.4-1 fails
-commons-compress = { module = "org.apache.commons:commons-compress", version = "1.26.0" }
+commons-compress = { module = "org.apache.commons:commons-compress", version = "1.26.1" }
 jsonapi-converter = { module = "com.github.jasminb:jsonapi-converter", version = "0.13" }
 q-builders = { module = "com.github.rutledgepaulv:q-builders", version = "1.6" }
 
