@@ -4,20 +4,24 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.LittleEndianDataInputStream;
+import org.apache.commons.compress.compressors.CompressorException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ReplayDataParserTest {
 
@@ -121,4 +125,17 @@ class ReplayDataParserTest {
     byte[] reference = Files.readAllBytes(referenceFile);
     assertThat("Legacy compressed file matches reference", Arrays.equals(data, reference));
   }
+
+  @Test
+  public void testParseModeratorEvent() throws CompressorException, IOException {
+    Path replayFile = temporaryFolder.resolve("TestModeratorEvents.fafreplay");
+    Files.copy(Objects.requireNonNull(getClass().getResourceAsStream("/replay/TestModeratorEvents.fafreplay")), replayFile);
+
+    ReplayDataParser parser = new ReplayDataParser(replayFile, objectMapper);
+
+    List<ModeratorEvent> moderatorEvents = parser.getModeratorEvents();
+    ModeratorEvent firstEvent = moderatorEvents.getFirst();
+    assertEquals(Duration.ofSeconds(20), firstEvent.time());
+    assertEquals("Created a marker with the text: 'my fabelous marker test'", firstEvent.message());
+    }
 }

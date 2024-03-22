@@ -20,12 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -58,6 +53,8 @@ public class ReplayDataParser {
   @Getter
   private List<ChatMessage> chatMessages;
   @Getter
+  private List<ModeratorEvent> moderatorEvents;
+  @Getter
   private Map<Integer, Map<Integer, AtomicInteger>> commandsPerMinuteByPlayer;
   private float x;
   private float y;
@@ -73,6 +70,7 @@ public class ReplayDataParser {
     this.objectMapper = objectMapper;
     armies = new HashMap<>();
     chatMessages = new ArrayList<>();
+    moderatorEvents = new ArrayList<>();
     commandsPerMinuteByPlayer = new HashMap<>();
     parse();
   }
@@ -280,6 +278,10 @@ public class ReplayDataParser {
               parseGiveResourcesToPlayer((Map<String, Object>) lua);
             }
 
+            if (Objects.equals("ModeratorEvent", functionName)) {
+              parseModeratorEvent((Map<String, Object>) lua);
+            }
+
             // No idea what this skips
             if (lua != null) {
               dataStream.skipBytes(4 * dataStream.readInt());
@@ -374,6 +376,18 @@ public class ReplayDataParser {
       }
     }
   }
+
+
+  void parseModeratorEvent(Map<String, Object> lua) {
+    String messageContent = (String) lua.get("Message");
+    int fromInt = ((Number) lua.get("From")).intValue();
+    int activeCommandSource = 0; // activeCommandSource is not available in .fafreplay, yet
+    if (lua.containsKey("activeCommandSource")) {
+      activeCommandSource = ((Number) lua.get("activeCommandSource")).intValue();
+    }
+    moderatorEvents.add(new ModeratorEvent(tickToTime(ticks), Integer.toString(fromInt), messageContent, activeCommandSource));
+  }
+
 
   private Duration tickToTime(int tick) {
     return Duration.ofSeconds(tick / 10);
