@@ -279,7 +279,7 @@ public class ReplayDataParser {
             }
 
             if (Objects.equals("ModeratorEvent", functionName)) {
-              parseModeratorEvent((Map<String, Object>) lua);
+              parseModeratorEvent((Map<String, Object>) lua, player);
             }
 
             // No idea what this skips
@@ -378,13 +378,10 @@ public class ReplayDataParser {
   }
 
 
-  void parseModeratorEvent(Map<String, Object> lua) {
+  void parseModeratorEvent(Map<String, Object> lua, Integer player) {
     String messageContent = (String) lua.get("Message");
     int fromInt = ((Number) lua.get("From")).intValue();
-    int activeCommandSource = 0; // activeCommandSource is not available in .fafreplay, yet
-    if (lua.containsKey("activeCommandSource")) {
-      activeCommandSource = ((Number) lua.get("activeCommandSource")).intValue();
-    }
+    int activeCommandSource = player;
     moderatorEvents.add(new ModeratorEvent(tickToTime(ticks), Integer.toString(fromInt), messageContent, activeCommandSource));
   }
 
