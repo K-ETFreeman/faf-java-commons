@@ -379,12 +379,22 @@ public class ReplayDataParser {
 
 
   void parseModeratorEvent(Map<String, Object> lua, Integer player) {
-    String messageContent = (String) lua.get("Message");
-    int fromInt = ((Number) lua.get("From")).intValue();
-    int activeCommandSource = player;
+    String messageContent = "Content of Message Missing";
+    int fromInt = -1; // Default Value
+    int activeCommandSource = -1; // Default Value
+
+    if (lua.containsKey("Message") && lua.get("Message") instanceof String value) {
+      messageContent = value;
+    }
+    if (lua.containsKey("From") && lua.get("From") instanceof Number value) {
+      fromInt = value.intValue();
+    }
+    if (player != null) {
+      activeCommandSource = player;
+    }
+
     moderatorEvents.add(new ModeratorEvent(tickToTime(ticks), Integer.toString(fromInt), messageContent, activeCommandSource));
   }
-
 
   private Duration tickToTime(int tick) {
     return Duration.ofSeconds(tick / 10);
