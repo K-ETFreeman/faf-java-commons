@@ -379,21 +379,39 @@ public class ReplayDataParser {
 
 
   void parseModeratorEvent(Map<String, Object> lua, Integer player) {
-    String messageContent = "Content of Message Missing";
-    int fromInt = -1; // Default Value
-    int activeCommandSource = -1; // Default Value
+    String messageContent = null;
+    String playerNameFromArmy = null;
+    String playerNameFromCommandSource = null;
+    Integer activeCommandSource = null;
+    Integer fromArmy = null;
 
     if (lua.containsKey("Message") && lua.get("Message") instanceof String value) {
       messageContent = value;
     }
+
     if (lua.containsKey("From") && lua.get("From") instanceof Number value) {
-      fromInt = value.intValue();
-    }
-    if (player != null) {
-      activeCommandSource = player;
+      fromArmy = value.intValue() - 1;
+
+      if (fromArmy != -2) {
+        Map<String, Object> army = armies.get(fromArmy);
+
+        if (army != null){
+          playerNameFromArmy = (String) army.get("PlayerName");
+        }
+      }
     }
 
-    moderatorEvents.add(new ModeratorEvent(tickToTime(ticks), Integer.toString(fromInt), messageContent, activeCommandSource));
+    if (player != null) {
+      activeCommandSource = player;
+      Map<String, Object> army = armies.get(activeCommandSource);
+
+      if (army != null) {
+        playerNameFromCommandSource = (String) army.get("PlayerName");
+      }
+    }
+
+    moderatorEvents.add(new ModeratorEvent(tickToTime(ticks), activeCommandSource, fromArmy,
+      messageContent, playerNameFromArmy, playerNameFromCommandSource));
   }
 
   private Duration tickToTime(int tick) {
