@@ -1,10 +1,14 @@
 package com.faforever.commons.replay;
 
+import com.faforever.commons.replay.body.event.Event;
+import com.faforever.commons.replay.body.event.LuaData;
+import com.faforever.commons.replay.body.event.Parser;
+import com.faforever.commons.replay.body.token.Token;
+import com.faforever.commons.replay.body.token.Tokenizer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.LittleEndianDataInputStream;
-import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.compressors.CompressorException;
@@ -48,30 +52,30 @@ public class ReplayDataParser {
   @Getter
   private Map<String, Map<String, ?>> mods;
   @Getter
-  private Map<Integer, Map<String, Object>> armies;
+  private final Map<Integer, Map<String, Object>> armies = new HashMap<>();
   private int randomSeed;
   @Getter
-  private List<ChatMessage> chatMessages;
+  private final List<ChatMessage> chatMessages = new ArrayList<>();
   @Getter
-  private List<ModeratorEvent> moderatorEvents;
+  private final List<ModeratorEvent> moderatorEvents = new ArrayList<>();
   @Getter
-  private Map<Integer, Map<Integer, AtomicInteger>> commandsPerMinuteByPlayer;
-  private float x;
-  private float y;
-  private float z;
-  private float w;
-  private float scale;
+  private final Map<Integer, Map<Integer, AtomicInteger>> commandsPerMinuteByPlayer = new HashMap<>();
+
   private int ticks;
+
   @Getter
   private List<GameOption> gameOptions;
+
+  @Getter
+  private List<Token> tokens;
+
+  @Getter
+  private List<Event> events;
 
   public ReplayDataParser(Path path, ObjectMapper objectMapper) throws IOException, CompressorException {
     this.path = path;
     this.objectMapper = objectMapper;
-    armies = new HashMap<>();
-    chatMessages = new ArrayList<>();
-    moderatorEvents = new ArrayList<>();
-    commandsPerMinuteByPlayer = new HashMap<>();
+
     parse();
   }
 
@@ -208,194 +212,211 @@ public class ReplayDataParser {
     randomSeed = dataStream.readInt();
   }
 
-  @SuppressWarnings("unchecked")
-  private void parseTicks(LittleEndianDataInputStream dataStream) throws IOException {
+  private void interpretEvents(List<Event> events) {
     Integer player = -1;
     boolean desync = false;
-    byte[] previousChecksum = null;
+    String previousChecksum = null;
     int previousTick = -1;
 
     Map<Integer, Integer> lastTicks = new HashMap<>();
 
-    int commandId;
-    while (dataStream.available() > 0) {
-      commandId = dataStream.readUnsignedByte();
-      int messageLength = dataStream.readUnsignedShort();
-      try {
-        Command command = Command.values()[commandId];
-        switch (command) {
-          case CMDST_ADVANCE:
-            ticks += dataStream.readInt();
-            break;
+    for (Event event : events) {
 
-          case CMDST_SET_COMMAND_SOURCE:
-            player = dataStream.readUnsignedByte();
-            break;
+      switch (event) {
+        case Event.Unprocessed(Token token, String reason) -> {
 
-          case CMDST_COMMAND_SOURCE_TERMINATED:
-            lastTicks.put(player, ticks);
-            break;
-
-          case CMDST_VERIFY_CHECKSUM:
-            if (desync) {
-              break;
-            }
-            byte[] checksum = readCheckSum(dataStream);
-            int tickNum = dataStream.readInt();
-
-            desync = tickNum == previousTick && !Arrays.equals(previousChecksum, checksum);
-
-            previousChecksum = checksum;
-            previousTick = ticks;
-            break;
-
-          case CMDST_SET_COMMAND_TARGET:
-            dataStream.skipBytes(4);
-            StiTarget stiTarget = StiTarget.values()[dataStream.readUnsignedByte()];
-            switch (stiTarget) {
-              case ENTITY:
-                int entityId = dataStream.readInt();
-                break;
-              case POSITION:
-                float x = dataStream.readFloat();
-                float y = dataStream.readFloat();
-                float z = dataStream.readFloat();
-                break;
-            }
-            break;
-
-          case CMDST_PROCESS_INFO_PAIR:
-            dataStream.readInt();
-            readString(dataStream);
-            readString(dataStream);
-            break;
-
-          case CMDST_LUA_SIM_CALLBACK:
-            String functionName = readString(dataStream);
-            Object lua = parseLua(dataStream);
-
-            if (Objects.equals("GiveResourcesToPlayer", functionName)) {
-              parseGiveResourcesToPlayer((Map<String, Object>) lua);
-            }
-
-            if (Objects.equals("ModeratorEvent", functionName)) {
-              parseModeratorEvent((Map<String, Object>) lua, player);
-            }
-
-            // No idea what this skips
-            if (lua != null) {
-              dataStream.skipBytes(4 * dataStream.readInt());
-            } else {
-              dataStream.skipBytes(4 + 3);
-            }
-            break;
-
-          case CMDST_ISSUE_COMMAND:
-          case CMDST_ISSUE_FACTORY_COMMAND:
-            commandsPerMinuteByPlayer
-              .computeIfAbsent(player, p -> new HashMap<>())
-              .computeIfAbsent(ticks, t -> new AtomicInteger())
-              .incrementAndGet();
-
-            int unitNums = dataStream.readInt();
-            dataStream.skipBytes(unitNums * 4);
-
-            dataStream.skipBytes(8);
-            int commandType = dataStream.readUnsignedByte();
-            dataStream.skipBytes(4);
-
-            switch (StiTarget.values()[dataStream.readUnsignedByte()]) {
-              case NONE:
-                break;
-              case ENTITY:
-                int entityId = dataStream.readInt();
-                break;
-              case POSITION:
-                x = dataStream.readFloat();
-                y = dataStream.readFloat();
-                z = dataStream.readFloat();
-                break;
-              default:
-            }
-
-            dataStream.skipBytes(1);
-            int formation = dataStream.readInt();
-            if (formation != -1) {
-              w = dataStream.readFloat();
-              x = dataStream.readFloat();
-              y = dataStream.readFloat();
-              z = dataStream.readFloat();
-              scale = dataStream.readFloat();
-            }
-
-            String bp = readString(dataStream);
-            dataStream.skipBytes(4 + 4 + 4);
-            Object upgradeLua = parseLua(dataStream);
-            if (upgradeLua != null) {
-              dataStream.skipBytes(1);
-            }
-
-            ((List<NotSure>) armies.get(player).get("commands")).add(new NotSure(ticks, commandType, bp, upgradeLua != null));
-            break;
-
-          case CMDST_RESUME:
-          case CMDST_REQUEST_PAUSE:
-          case CMDST_END_GAME:
-            break;
-
-          case CMDST_SET_COMMAND_TYPE:
-            dataStream.skipBytes(8);
-            break;
-
-          default:
-            dataStream.skipBytes(messageLength - 3);
         }
-      } catch (Exception throwable) {
-        log.warn("Unable to determine command {}", commandId, throwable);
-        dataStream.skipBytes(messageLength - 3);
-      }
-    }
-  }
 
-  private void parseGiveResourcesToPlayer(Map<String, Object> lua) {
-    if (lua.containsKey("Msg") && lua.containsKey("From") && lua.containsKey("Sender")) {
-      int fromArmy = ((Number) lua.get("From")).intValue() - 1;
-      if (fromArmy != -2) {
-        Map<String, String> msg = (Map<String, String>) lua.get("Msg");
-        String sender = (String) lua.get("Sender");
-        // This can either be a player name or a Map of something, in which case it's actually giving resources
-        Object receiver = msg.get("to");
-        if (receiver instanceof String) {
-          String text = msg.get("text");
+        case Event.ProcessingError(Token token, Exception exception) -> {
 
-          Map<String, Object> army = armies.get(fromArmy);
-          if (army != null && Objects.equals(army.get("PlayerName"), sender)) {
-            chatMessages.add(new ChatMessage(tickToTime(ticks), sender, String.valueOf(receiver), text));
+        }
+
+        case Event.Advance(int ticksToAdvance) -> {
+          ticks += ticksToAdvance;
+        }
+
+        case Event.SetCommandSource(int playerIndex) -> {
+          player = playerIndex;
+        }
+
+        case Event.CommandSourceTerminated() -> {
+          lastTicks.put(player, ticks);
+        }
+
+        case Event.VerifyChecksum(String hash, int tick) -> {
+          desync = tick == previousTick && !Objects.equals(previousChecksum, hash);
+          previousChecksum = hash;
+          previousTick = ticks;
+
+          if (desync) {
+            log.warn("Replay desynced");
+            return;
           }
         }
+
+        case Event.RequestPause() -> {
+
+        }
+
+        case Event.RequestResume() -> {
+
+        }
+
+        case Event.SingleStep() -> {
+
+        }
+
+        case Event.CreateUnit(int playerIndex, String blueprintId, float px, float pz, float heading) -> {
+
+        }
+
+        case Event.CreateProp(String blueprintId, float px, float pz, float heading) -> {
+
+        }
+
+        case Event.DestroyEntity(int entityId) -> {
+
+        }
+
+        case Event.WarpEntity(int entityId, float px, float py, float pz) -> {
+
+        }
+
+        case Event.ProcessInfoPair(int entityId, String arg1, String arg2) -> {
+
+        }
+
+        case Event.IssueCommand(Event.CommandUnits commandUnits, Event.CommandData commandData) -> {
+          commandsPerMinuteByPlayer
+            .computeIfAbsent(player, p -> new HashMap<>())
+            .computeIfAbsent(ticks, t -> new AtomicInteger())
+            .incrementAndGet();
+        }
+
+        case Event.IssueFactoryCommand(
+          Event.CommandUnits commandUnits, Event.CommandData commandData
+        ) -> {
+          commandsPerMinuteByPlayer
+            .computeIfAbsent(player, p -> new HashMap<>())
+            .computeIfAbsent(ticks, t -> new AtomicInteger())
+            .incrementAndGet();
+        }
+
+        case Event.IncreaseCommandCount(int commandId, int delta) -> {
+
+        }
+
+        case Event.DecreaseCommandCount(int commandId, int delta) -> {
+
+        }
+
+        case Event.SetCommandTarget(int commandId, Event.CommandTarget commandTarget) -> {
+
+        }
+
+        case Event.SetCommandType(int commandId, int targetId) -> {
+
+        }
+
+        case Event.SetCommandCells(int commandId, Object parametersLua, float px, float py, float pz) -> {
+
+        }
+
+        case Event.RemoveCommandFromQueue(int commandId, int unitId) -> {
+
+        }
+
+        case Event.DebugCommand() -> {
+
+        }
+
+        case Event.ExecuteLuaInSim(String luaCode) -> {
+
+        }
+
+        case Event.LuaSimCallback(
+          String func, LuaData.Table parametersLua, Event.CommandUnits commandUnits
+        ) when func.equals("GiveResourcesToPlayer") -> {
+          parseGiveResourcesToPlayer(parametersLua);
+        }
+
+        case Event.LuaSimCallback(
+          String func, LuaData.Table parametersLua, Event.CommandUnits commandUnits
+        ) when func.equals("ModeratorEvent") -> {
+          parseModeratorEvent(parametersLua, player);
+        }
+
+        case Event.LuaSimCallback(
+          String func, LuaData parametersLua, Event.CommandUnits commandUnits
+        ) -> {
+
+        }
+
+        case Event.EndGame() -> {
+
+        }
+
+      }
+    }
+  }
+
+  private void parseGiveResourcesToPlayer(LuaData.Table lua) {
+    if (lua.value().containsKey("Msg") && lua.value().containsKey("From") && lua.value().containsKey("Sender")) {
+
+      // TODO: use the command source (player value) instead of the values from the callback. The values from the callback can be manipulated
+      if (!(lua.value().get("From") instanceof LuaData.Number(float luaFromArmy))) {
+        return;
+      }
+
+      int fromArmy = (int) luaFromArmy - 1;
+      if (fromArmy == -2) {
+        return;
+      }
+
+      if (!(lua.value().get("Msg") instanceof LuaData.Table(Map<String, LuaData> luaMsg))) {
+        return;
+      }
+
+      if (!(lua.value().get("Sender") instanceof LuaData.String(String luaSender))) {
+        return;
+      }
+
+      // This can either be a player name or a Map of something, in which case it's actually giving resources
+      if (!(luaMsg.get("to") instanceof LuaData.String(String luaMsgReceiver))) {
+        return;
+      }
+
+      if (!(luaMsg.get("text") instanceof LuaData.String(String luaMsgText))) {
+        return;
+      }
+
+      Map<String, Object> army = armies.get(fromArmy);
+      if (army != null && Objects.equals(army.get("PlayerName"), luaSender)) {
+        chatMessages.add(new ChatMessage(tickToTime(ticks), luaSender, String.valueOf(luaMsgReceiver), luaMsgText));
       }
     }
   }
 
 
-  void parseModeratorEvent(Map<String, Object> lua, Integer player) {
+  void parseModeratorEvent(LuaData.Table lua, Integer player) {
     String messageContent = null;
     String playerNameFromArmy = null;
     String playerNameFromCommandSource = null;
     Integer activeCommandSource = null;
     Integer fromArmy = null;
 
-    if (lua.containsKey("Message") && lua.get("Message") instanceof String value) {
-      messageContent = value;
+    if (lua.value().get("Message") instanceof LuaData.String(String luaMessage)) {
+      messageContent = luaMessage;
     }
 
-    if (lua.containsKey("From") && lua.get("From") instanceof Number value) {
-      fromArmy = value.intValue() - 1;
+    if (lua.value().get("From") instanceof LuaData.Number(float luaFrom)) {
+      fromArmy = (int) luaFrom - 1;
+
 
       if (fromArmy != -2) {
         Map<String, Object> army = armies.get(fromArmy);
 
-        if (army != null){
+        if (army != null) {
           playerNameFromArmy = (String) army.get("PlayerName");
         }
       }
@@ -418,108 +439,13 @@ public class ReplayDataParser {
     return Duration.ofSeconds(tick / 10);
   }
 
-  private byte[] readCheckSum(LittleEndianDataInputStream dataStream) throws IOException {
-    byte[] bytes = new byte[16];
-    dataStream.read(bytes);
-    return bytes;
-  }
-
   private void parse() throws IOException, CompressorException {
     readReplayData(path);
-    LittleEndianDataInputStream dataStream = new LittleEndianDataInputStream(new ByteArrayInputStream(data));
-    parseHeader(dataStream);
-    parseTicks(dataStream);
-  }
-
-
-  private enum StiTarget {
-    NONE,
-    ENTITY,
-    POSITION
-  }
-
-  private enum Command {
-    CMDST_ADVANCE,
-    CMDST_SET_COMMAND_SOURCE,
-    CMDST_COMMAND_SOURCE_TERMINATED,
-    CMDST_VERIFY_CHECKSUM,
-    CMDST_REQUEST_PAUSE,
-    CMDST_RESUME,
-    CMDST_SINGLE_STEP,
-    CMDST_CREATE_UNIT,
-    CMDST_CREATE_PROP,
-    CMDST_DESTROY_ENTITY,
-    CMDST_WARP_ENTITY,
-    CMDST_PROCESS_INFO_PAIR,
-    CMDST_ISSUE_COMMAND,
-    CMDST_ISSUE_FACTORY_COMMAND,
-    CMDST_INCREASE_COMMAND_COUNT,
-    CMDST_DECRASE_COMMAND_COUNT,
-    CMDST_SET_COMMAND_TARGET,
-    CMDST_SET_COMMAND_TYPE,
-    CMDST_SET_COMMAND_CELLS,
-    CMDST_REMOVE_COMMAND_FROM_QUEUE,
-    CMDST_DEBUG_COMMAND,
-    CMDST_EXECUTE_LUA_IN_SIM,
-    CMDST_LUA_SIM_CALLBACK,
-    CMDST_END_GAME
-  }
-
-  public enum EUnitCommandType {
-    NONE("NONE"),
-    STOP("Stop"),
-    MOVE("Move"),
-    DIVE("Dive"),
-    FORM_MOVE("FormMove"),
-    BUILD_SILO_TACTICAL("BuildSiloTactical"),
-    BUILD_SILO_NUKE("BuildSiloNuke"),
-    BUILD_FACTORY("BuildFactory"),
-    BUILD_MOBILE("BuildMobile"),
-    BUILD_ASSIsT("BuildAssist"),
-    ATTACK("Attack"),
-    FORM_ATTACK("FormAttack"),
-    NUKE("Nuke"),
-    TACTICAL("Tactical"),
-    TELEPORT("Teleport"),
-    GUARD("Guard"),
-    PATROL("Patrol"),
-    FERRY("Ferry"),
-    FORM_PATROL("FormPatrol"),
-    RECLAIM("Reclaim"),
-    REPAIR("Repair"),
-    CAPTURE("Capture"),
-    TRANSPORT_LOAD_UNITS("TransportLoadUnits"),
-    TRANSPORT_REVERSE_LOAD_UNITS("TransportReverseLoadUnits"),
-    TRANSPORT_UNLOAD_UNITS("TransportUnloadUnits"),
-    TRANSPORT_UNLOAD_SPECIFIC_UNITS("TransportUnloadSpecificUnits"),
-    DETACH_FROM_TRANSPORT("DetachFromTransport"),
-    UPGRADE("Upgrade"),
-    SCRIPT("Script"),
-    ASSIST_COMMANDER("AssistCommander"),
-    KILL_SELF("KillSelf"),
-    DESTROY_SELF("DestroySelf"),
-    SACRIFICE("Sacrifice"),
-    PAUSE("Pause"),
-    OVER_CHARGE("OverCharge"),
-    AGGRESSIVE_MOVE("AggressiveMove"),
-    FORM_AGGRESSIVE_MOVE("FormAggressiveMove"),
-    ASSIST_MOVE("AssistMove"),
-    SPECIAL_ACTION("SpecialAction"),
-    DOCK("Dock");
-
-    private final String string;
-
-    EUnitCommandType(String string) {
-      this.string = string;
+    try (LittleEndianDataInputStream dataStream = new LittleEndianDataInputStream(new ByteArrayInputStream(data))) {
+      parseHeader(dataStream);
+      tokens = Tokenizer.tokenize(dataStream);
     }
-  }
-
-  @Data
-  private class NotSure {
-
-    private final int tick;
-    private final int commandType;
-    private final String bp;
-    private final boolean upgradeLua;
+    events = Parser.parseTokens(tokens);
+    interpretEvents(events);
   }
 }
