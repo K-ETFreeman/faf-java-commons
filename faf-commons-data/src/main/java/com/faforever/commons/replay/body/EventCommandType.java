@@ -1,4 +1,4 @@
-package com.faforever.commons.replay.body.event;
+package com.faforever.commons.replay.body;
 
 import lombok.Getter;
 
@@ -14,7 +14,7 @@ public enum EventCommandType {
   BUILD_SILO_NUKE("BuildSiloNuke"),
   BUILD_FACTORY("BuildFactory"),
   BUILD_MOBILE("BuildMobile"),
-  BUILD_ASSIsT("BuildAssist"),
+  BUILD_ASSIST("BuildAssist"),
   ATTACK("Attack"),
   FORM_ATTACK("FormAttack"),
   NUKE("Nuke"),

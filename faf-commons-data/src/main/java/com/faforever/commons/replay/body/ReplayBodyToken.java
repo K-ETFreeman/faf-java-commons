@@ -1,6 +1,6 @@
-package com.faforever.commons.replay.body.token;
+package com.faforever.commons.replay.body;
 
-public record Token(TokenId tokenId, int tokenSize, byte[] tokenContent) {
+public record ReplayBodyToken(TokenId tokenId, int tokenSize, byte[] tokenContent) {
 
   public enum TokenId {
     // Order is crucial

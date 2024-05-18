@@ -1,6 +1,6 @@
-package com.faforever.commons.replay.body.event;
+package com.faforever.commons.replay.body;
 
-import com.faforever.commons.replay.body.token.Token;
+import com.faforever.commons.replay.shared.LuaData;
 
 import java.util.List;
 
@@ -9,13 +9,13 @@ public sealed interface Event {
   /**
    * Created by the parser to indicate we do not support this event yet.
    */
-  record Unprocessed(Token token, String reason) implements Event {
+  record Unprocessed(ReplayBodyToken token, String reason) implements Event {
   }
 
   /**
    * Created by the parser to indicate we made a mistake
    */
-  record ProcessingError(Token token, Exception exception) implements Event {
+  record ProcessingError(ReplayBodyToken token, Exception exception) implements Event {
   }
 
   /**
@@ -139,9 +139,9 @@ public sealed interface Event {
   }
 
   /**
-   * ??
+   * Created by debug related console commands such as `SallyShears`
    */
-  record DebugCommand() implements Event {
+  record DebugCommand(String command, float px, float py, float pz, byte focusArmy, CommandUnits units) implements Event {
   }
 
   /**
@@ -182,9 +182,9 @@ public sealed interface Event {
    * @param commandTarget
    * @param commandFormation
    * @param blueprintId
-   * @param parametersLua
+   * @param taskParameters
    */
   record CommandData(int commandId, EventCommandType commandType, CommandTarget commandTarget,
-                     CommandFormation commandFormation, String blueprintId, LuaData parametersLua) {
+                     CommandFormation commandFormation, String blueprintId, LuaData taskParameters, boolean addToQueue) {
   }
 }

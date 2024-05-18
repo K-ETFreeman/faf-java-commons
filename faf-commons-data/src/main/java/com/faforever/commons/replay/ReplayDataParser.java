@@ -1,10 +1,10 @@
 package com.faforever.commons.replay;
 
-import com.faforever.commons.replay.body.event.Event;
-import com.faforever.commons.replay.body.event.LuaData;
-import com.faforever.commons.replay.body.event.Parser;
-import com.faforever.commons.replay.body.token.Token;
-import com.faforever.commons.replay.body.token.Tokenizer;
+import com.faforever.commons.replay.body.Event;
+import com.faforever.commons.replay.shared.LuaData;
+import com.faforever.commons.replay.body.ReplayBodyParser;
+import com.faforever.commons.replay.body.ReplayBodyToken;
+import com.faforever.commons.replay.body.ReplayBodyTokenizer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.BaseEncoding;
@@ -67,7 +67,7 @@ public class ReplayDataParser {
   private List<GameOption> gameOptions;
 
   @Getter
-  private List<Token> tokens;
+  private List<ReplayBodyToken> tokens;
 
   @Getter
   private List<Event> events;
@@ -151,8 +151,7 @@ public class ReplayDataParser {
       }
       case ZSTD: {
         ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(data);
-        CompressorInputStream compressorInputStream = new CompressorStreamFactory()
-          .createCompressorInputStream(arrayInputStream);
+        CompressorInputStream compressorInputStream = new CompressorStreamFactory().createCompressorInputStream(arrayInputStream);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         IOUtils.copy(compressorInputStream, out);
@@ -167,17 +166,17 @@ public class ReplayDataParser {
   @SuppressWarnings("unchecked")
   private void parseHeader(LittleEndianDataInputStream dataStream) throws IOException {
     replayPatchFieldId = readString(dataStream);
-    dataStream.skipBytes(3);
+    String arg13 = readString(dataStream); // always \r\n
 
     String[] split = readString(dataStream).split("\\r\\n");
     String replayVersionId = split[0];
     map = split[1];
-    dataStream.skipBytes(4);
+    String arg23 = readString((dataStream)); // always \r\n and some unknown character
 
-    int numberOfMods = dataStream.readInt();
+    int sizeModsInBytes = dataStream.readInt();
     mods = (Map<String, Map<String, ?>>) parseLua(dataStream);
 
-    int scenarioSize = dataStream.readInt();
+    int sizeGameOptionsInBytes = dataStream.readInt();
     this.gameOptions = ((Map<String, Object>) parseLua(dataStream)).entrySet().stream()
       .filter(entry -> "Options".equals(entry.getKey()))
       .flatMap(entry -> ((Map<String, Object>) entry.getValue()).entrySet().stream())
@@ -197,7 +196,7 @@ public class ReplayDataParser {
 
     int numberOfArmies = dataStream.readUnsignedByte();
     for (int i = 0; i < numberOfArmies; i++) {
-      dataStream.skipBytes(4);
+      int sizePlayerDataInBytes = dataStream.readInt();
       Map<String, Object> playerData = (Map<String, Object>) parseLua(dataStream);
       int playerSource = dataStream.readUnsignedByte();
 
@@ -223,11 +222,11 @@ public class ReplayDataParser {
     for (Event event : events) {
 
       switch (event) {
-        case Event.Unprocessed(Token token, String reason) -> {
+        case Event.Unprocessed(ReplayBodyToken token, String reason) -> {
 
         }
 
-        case Event.ProcessingError(Token token, Exception exception) -> {
+        case Event.ProcessingError(ReplayBodyToken token, Exception exception) -> {
 
         }
 
@@ -286,7 +285,9 @@ public class ReplayDataParser {
 
         }
 
-        case Event.IssueCommand(Event.CommandUnits commandUnits, Event.CommandData commandData) -> {
+        case Event.IssueCommand(
+          Event.CommandUnits commandUnits, Event.CommandData commandData
+        ) -> {
           commandsPerMinuteByPlayer
             .computeIfAbsent(player, p -> new HashMap<>())
             .computeIfAbsent(ticks, t -> new AtomicInteger())
@@ -326,7 +327,9 @@ public class ReplayDataParser {
 
         }
 
-        case Event.DebugCommand() -> {
+        case Event.DebugCommand(
+          String command, float px, float py, float pz, byte focusArmy, Event.CommandUnits units
+        ) -> {
 
         }
 
@@ -431,8 +434,7 @@ public class ReplayDataParser {
       }
     }
 
-    moderatorEvents.add(new ModeratorEvent(tickToTime(ticks), activeCommandSource, fromArmy,
-      messageContent, playerNameFromArmy, playerNameFromCommandSource));
+    moderatorEvents.add(new ModeratorEvent(tickToTime(ticks), activeCommandSource, fromArmy, messageContent, playerNameFromArmy, playerNameFromCommandSource));
   }
 
   private Duration tickToTime(int tick) {
@@ -443,9 +445,9 @@ public class ReplayDataParser {
     readReplayData(path);
     try (LittleEndianDataInputStream dataStream = new LittleEndianDataInputStream(new ByteArrayInputStream(data))) {
       parseHeader(dataStream);
-      tokens = Tokenizer.tokenize(dataStream);
+      tokens = ReplayBodyTokenizer.tokenize(dataStream);
     }
-    events = Parser.parseTokens(tokens);
+    events = ReplayBodyParser.parseTokens(tokens);
     interpretEvents(events);
   }
 }

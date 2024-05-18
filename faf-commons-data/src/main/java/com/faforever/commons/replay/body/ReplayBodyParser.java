@@ -1,17 +1,20 @@
-package com.faforever.commons.replay.body.event;
+package com.faforever.commons.replay.body;
 
-import com.faforever.commons.replay.body.token.Token;
+import com.faforever.commons.replay.shared.LuaData;
+import com.faforever.commons.replay.shared.LoadUtils;
 import com.google.common.io.LittleEndianDataInputStream;
+import org.jetbrains.annotations.Contract;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class Parser {
-  public static List<Event> parseTokens(List<Token> tokens) throws IOException {
-    return tokens.stream().parallel().map((token) -> {
+public class ReplayBodyParser {
+
+  @Contract(pure = true)
+  public static List<Event> parseTokens(List<ReplayBodyToken> tokens) throws IOException {
+    return tokens.stream().map((token) -> {
       try {
         return parseToken(token);
       } catch (Exception exception) {
@@ -20,22 +23,7 @@ public class Parser {
     }).toList();
   }
 
-  private static int peek(LittleEndianDataInputStream dataStream) throws IOException {
-    dataStream.mark(1);
-    int next = dataStream.readUnsignedByte();
-    dataStream.reset();
-    return next;
-  }
-
-  private static String parseString(LittleEndianDataInputStream dataStream) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    byte tempByte;
-    while ((tempByte = dataStream.readByte()) != 0) {
-      out.write(tempByte);
-    }
-    return out.toString(StandardCharsets.UTF_8);
-  }
-
+  @Contract(pure = true)
   private static Event.CommandUnits parseCommandUnits(LittleEndianDataInputStream stream) throws IOException {
     int unitCount = stream.readInt();
     ArrayList<Integer> unitIds = new ArrayList<>(unitCount);
@@ -46,6 +34,7 @@ public class Parser {
     return new Event.CommandUnits(unitCount, unitIds);
   }
 
+  @Contract(pure = true)
   private static Event.CommandFormation parseCommandFormation(LittleEndianDataInputStream stream) throws IOException {
     float orientation = 0;
     float px = 0;
@@ -65,6 +54,7 @@ public class Parser {
     return new Event.CommandFormation(formation, orientation, px, py, pz, scale);
   }
 
+  @Contract(pure = true)
   private static Event.CommandTarget parseCommandTarget(LittleEndianDataInputStream stream) throws IOException {
     CommandTargetType target = CommandTargetType.values()[stream.readByte()];
     switch (target) {
@@ -86,6 +76,7 @@ public class Parser {
     }
   }
 
+  @Contract(pure = true)
   private static Event.CommandData parseCommandData(LittleEndianDataInputStream stream) throws IOException {
     int commandId = stream.readInt();
     byte[] arg1 = stream.readNBytes(4);
@@ -98,79 +89,21 @@ public class Parser {
 
     Event.CommandFormation commandFormation = parseCommandFormation(stream);
 
-    String blueprintId = parseString(stream);
+    String blueprintId = LoadUtils.readString(stream);
     byte[] arg4 = stream.readNBytes(12);
-    byte[] arg5 = new byte[0];
 
-    LuaData parametersLua = parseLua(stream);
-    if (!(parametersLua instanceof LuaData.Nil)) {
-      arg5 = stream.readNBytes(1);
-    }
+    LuaData parametersLua = LoadUtils.parseLua(stream);
+    boolean addToQueue = stream.readByte() > 0;
 
     return new Event.CommandData(
-      commandId, commandType, commandTarget, commandFormation, blueprintId, parametersLua
+      commandId, commandType, commandTarget, commandFormation, blueprintId, parametersLua, addToQueue
     );
   }
 
-  private static LuaData parseLua(LittleEndianDataInputStream dataStream) throws IOException {
-    int type = dataStream.readUnsignedByte();
-
-    final int LUA_NUMBER = 0;
-    final int LUA_STRING = 1;
-    final int LUA_NIL = 2;
-    final int LUA_BOOL = 3;
-    final int LUA_TABLE_START = 4;
-    final int LUA_TABLE_END = 5;
-
-    switch (type) {
-      case LUA_NUMBER -> {
-        float value = dataStream.readFloat();
-        return new LuaData.Number(value);
-      }
-
-      case LUA_STRING -> {
-        String value = parseString(dataStream);
-        return new LuaData.String(value);
-      }
-
-
-      case LUA_NIL -> {
-        dataStream.skipBytes(1);
-        return new LuaData.Nil();
-      }
-
-      case LUA_BOOL -> {
-        boolean value = dataStream.readUnsignedByte() == 0;
-        return new LuaData.Bool(value);
-      }
-
-      case LUA_TABLE_START -> {
-        Map<String, LuaData> value = new HashMap<>();
-        while (peek(dataStream) != LUA_TABLE_END) {
-          LuaData key = parseLua(dataStream);
-
-          switch (key) {
-            case LuaData.String(String str) -> value.put(str, parseLua(dataStream));
-
-            case LuaData.Number(float num) -> value.put(String.valueOf(num), parseLua(dataStream));
-
-            default -> throw new IllegalStateException("Unexpected data type: " + type);
-          }
-
-          dataStream.mark(1);
-        }
-        dataStream.skipBytes(1);
-
-        return new LuaData.Table(value);
-      }
-      default -> throw new IllegalStateException("Unexpected data type: " + type);
-    }
-  }
-
-  private static Event parseToken(Token token) throws IOException {
-
+  @Contract(pure = true)
+  private static Event parseToken(ReplayBodyToken token) throws IOException {
     try (LittleEndianDataInputStream stream = new LittleEndianDataInputStream((new ByteArrayInputStream(token.tokenContent())))) {
-      return switch (token.tokenId()) {
+      Event event = switch (token.tokenId()) {
         case CMDST_ADVANCE -> {
           int ticks = stream.readInt();
           yield new Event.Advance(ticks);
@@ -198,7 +131,7 @@ public class Parser {
 
         case CMDST_CREATE_UNIT -> {
           int playerIndex = stream.readByte();
-          String blueprintId = parseString(stream);
+          String blueprintId = LoadUtils.readString(stream);
           float px = stream.readFloat();
           float pz = stream.readFloat();
           float heading = stream.readFloat();
@@ -207,7 +140,7 @@ public class Parser {
         }
 
         case CMDST_CREATE_PROP -> {
-          String blueprintId = parseString(stream);
+          String blueprintId = LoadUtils.readString(stream);
           float px = stream.readFloat();
           float pz = stream.readFloat();
           float heading = stream.readFloat();
@@ -229,9 +162,9 @@ public class Parser {
         }
 
         case CMDST_PROCESS_INFO_PAIR -> {
-          int entityId = stream.read();
-          String arg1 = parseString(stream);
-          String arg2 = parseString(stream);
+          int entityId = stream.readInt();
+          String arg1 = LoadUtils.readString(stream);
+          String arg2 = LoadUtils.readString(stream);
           yield new Event.ProcessInfoPair(entityId, arg1, arg2);
         }
 
@@ -275,7 +208,7 @@ public class Parser {
 
         case CMDST_SET_COMMAND_CELLS -> {
           int commandId = stream.readInt();
-          LuaData parametersLua = parseLua(stream);
+          LuaData parametersLua = LoadUtils.parseLua(stream);
           if (!(parametersLua instanceof LuaData.Nil)) {
             stream.readNBytes(1);
           }
@@ -293,16 +226,25 @@ public class Parser {
           yield new Event.RemoveCommandFromQueue(commandId, unitId);
         }
 
-        case CMDST_DEBUG_COMMAND -> new Event.Unprocessed(token, "CMDST_DEBUG_COMMAND");
+        case CMDST_DEBUG_COMMAND -> {
+          String command = LoadUtils.readString(stream);
+          float px = stream.readFloat();
+          float py = stream.readFloat();
+          float pz = stream.readFloat();
+          byte focusArmy = stream.readByte();
+          Event.CommandUnits commandUnits = parseCommandUnits(stream);
+
+          yield new Event.DebugCommand(command, px, py, pz, focusArmy, commandUnits);
+        }
 
         case CMDST_EXECUTE_LUA_IN_SIM -> {
-          String luaCode = parseString(stream);
+          String luaCode = LoadUtils.readString(stream);
           yield new Event.ExecuteLuaInSim(luaCode);
         }
 
         case CMDST_LUA_SIM_CALLBACK -> {
-          String func = parseString(stream);
-          LuaData args = parseLua(stream);
+          String func = LoadUtils.readString(stream);
+          LuaData args = LoadUtils.parseLua(stream);
           Event.CommandUnits commandUnits = null;
 
           // suspicion that this is just flat out wrong! Whether there's a selection in the data is not related to whether there are Lua arguments
@@ -320,6 +262,12 @@ public class Parser {
 
         case null -> new Event.Unprocessed(token, "Unknown");
       };
+
+      if(stream.available() > 0) {
+        throw new IllegalStateException("Expected end of stream");
+      }
+
+      return event;
     }
   }
 

@@ -1,6 +1,5 @@
 package com.faforever.commons.replay;
 
-import ch.qos.logback.classic.encoder.JsonEncoder;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
@@ -18,14 +17,13 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class ReplayDataParserTest {
+class ReplayLoaderTableParserTest {
 
   @TempDir
   public Path temporaryFolder;
