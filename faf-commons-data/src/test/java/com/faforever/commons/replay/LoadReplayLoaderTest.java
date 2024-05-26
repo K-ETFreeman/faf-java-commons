@@ -151,6 +151,25 @@ class LoadReplayLoaderTest {
   }
 
   @Test
+  public void parseBinary08() throws CompressorException, IOException {
+    assertDoesNotThrow(
+      () -> {
+        Path fafReplayFile = temporaryFolder.resolve("mods.fafreplay");
+        Files.copy(Objects.requireNonNull(getClass().getResourceAsStream("/replay/mods.fafreplay")), fafReplayFile);
+        ReplayContainer fafReplayContainer = ReplayLoader.loadFAFReplayFromDisk(fafReplayFile);
+
+        assertEquals(2, fafReplayContainer.header().mods().size());
+
+        assertNoUnprocessedTokens(fafReplayContainer);
+        assertNoErrorTokens(fafReplayContainer);
+
+        List<ChatMessage> chatMessages = ReplaySemantics.findChatMessages(fafReplayContainer.header().sources(), fafReplayContainer.registeredEvents());
+        assertEquals(0, chatMessages.size());
+      }
+    );
+  }
+
+  @Test
   public void compareBinary01() throws CompressorException, IOException {
     Path fafReplayFile = temporaryFolder.resolve("22338092.fafreplay");
     Files.copy(Objects.requireNonNull(getClass().getResourceAsStream("/replay/load/22338092.fafreplay")), fafReplayFile);

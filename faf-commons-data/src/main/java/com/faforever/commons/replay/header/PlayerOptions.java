@@ -9,8 +9,6 @@ package com.faforever.commons.replay.header;
  * @param ratingDeviation
  * @param clan
  * @param isCivilian
- * @param isReady
- * @param isBadMap
  * @param lobbyIndex
  * @param armyName
  * @param armyColor
@@ -20,11 +18,10 @@ package com.faforever.commons.replay.header;
  * @param country
  * @param team
  * @param faction
- * @param sourceId
  */
-public record PlayerOptions(boolean isHuman, String aiPersonality, float ratingMean, float ratingDeviation, String clan,
-                            boolean isCivilian, boolean isReady, boolean isBadMap, int lobbyIndex,
-                            String armyName, String armyColor, String playerColor, String playerName,
-                            int ratedGamesPlayed, String country,
-                            int team, int faction, int sourceId) {
+public record PlayerOptions(Boolean isHuman, String aiPersonality, Float ratingMean, Float ratingDeviation, String clan,
+                            Boolean isCivilian, Integer lobbyIndex,
+                            String armyName, Integer armyColor, Integer playerColor, String playerName,
+                            Integer ratedGamesPlayed, String country,
+                            Integer team, Integer faction) {
 }

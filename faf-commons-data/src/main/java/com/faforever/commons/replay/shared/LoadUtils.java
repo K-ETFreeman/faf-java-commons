@@ -20,7 +20,7 @@ public class LoadUtils {
   }
 
   /**
-   * Parses a string from the data stream
+   * Parses a value from the data stream
    * @param dataStream
    * @return
    * @throws IOException

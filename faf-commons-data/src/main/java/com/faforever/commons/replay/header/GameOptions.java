@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 /**
  * Populated by the game options field of the table that is passed to `CLobby:LaunchGame`
+ *
  * @param autoTeams
  * @param teamLock
  * @param teamSpawn
@@ -13,19 +14,20 @@ import java.util.Arrays;
  * @param revealedCivilians
  * @param scoreEnabled
  * @param unitCap
- * @param unRated
+ * @param unRanked
  * @param victory
  */
-public record GameOptions(AutoTeams autoTeams, TeamLock teamLock, TeamSpawn teamSpawn, boolean allowObservers,
-                          boolean cheatsEnabled, boolean prebuiltUnits, boolean revealedCivilians, boolean scoreEnabled,
-                          int unitCap, boolean unRated, Victory victory) {
+public record GameOptions(AutoTeams autoTeams, TeamLock teamLock, TeamSpawn teamSpawn, Boolean allowObservers,
+                          Boolean cheatsEnabled, Boolean prebuiltUnits, Boolean revealedCivilians, Boolean scoreEnabled,
+                          Integer unitCap, String unRanked, Victory victory) {
 
   public enum AutoTeams {
     NONE("none", "None"),
     MANUAL("manual", "Manual"),
     TOP_VS_BOTTOM("tvsb", "Top versus bottom"),
     LEFT_VS_RIGHT("lvsr", "Left versus right"),
-    EVEN_VS_UNEVEN("pvsi", "Even versus uneven");
+    EVEN_VS_UNEVEN("pvsi", "Even versus uneven"),
+    UNKNOWN("unknown", "Unknown");
 
     public final String readable;
 
@@ -37,17 +39,17 @@ public record GameOptions(AutoTeams autoTeams, TeamLock teamLock, TeamSpawn team
     }
 
     public static AutoTeams findByKey(String key) {
-      for (AutoTeams autoTeam : values()) {
-        if (autoTeam.key.equals(key)) {
-          return autoTeam;
+      for (AutoTeams value : values()) {
+        if (value.key.equals(key)) {
+          return value;
         }
       }
-      throw new IllegalArgumentException("Unknown key: " + key);
+      return AutoTeams.UNKNOWN;
     }
   }
 
   public enum TeamLock {
-    LOCKED("locked", "Locked"), UNLOCKED("unlocked", "Unlocked");
+    LOCKED("locked", "Locked"), UNLOCKED("unlocked", "Unlocked"), UNKNOWN("unknown", "Unknown");;
 
     public final String readable;
 
@@ -59,12 +61,13 @@ public record GameOptions(AutoTeams autoTeams, TeamLock teamLock, TeamSpawn team
     }
 
     public static TeamLock findByKey(String key) {
-      for (TeamLock teamLock : values()) {
-        if (teamLock.key.equals(key)) {
-          return teamLock;
+      for (TeamLock value : values()) {
+        if (value.key.equals(key)) {
+          return value;
         }
       }
-      throw new IllegalArgumentException("Unknown key: " + key);
+
+      return TeamLock.UNKNOWN;
     }
   }
 
@@ -77,7 +80,8 @@ public record GameOptions(AutoTeams autoTeams, TeamLock teamLock, TeamSpawn team
     RANDOM_REVEAL("random_reveal", "Random and revealed"),
     BALANCED_REVEAL("balanced_reveal", "Balanced and revealed"),
     BALANCED_REVEAL_MIRRORED("balanced_reveal_mirrored", "Mirror balanced and revealed"),
-    BALANCED_FLEX_REVEAL("balanced_flex_reveal", "Flexible balanced and revealed");
+    BALANCED_FLEX_REVEAL("balanced_flex_reveal", "Flexible balanced and revealed"),
+    UNKNOWN("unknown", "Unknown");
 
     public final String readable;
 
@@ -89,12 +93,13 @@ public record GameOptions(AutoTeams autoTeams, TeamLock teamLock, TeamSpawn team
     }
 
     public static TeamSpawn findByKey(String key) {
-      for (TeamSpawn teamSpawn : values()) {
-        if (teamSpawn.key.equals(key)) {
-          return teamSpawn;
+      for (TeamSpawn value : values()) {
+        if (value.key.equals(key)) {
+          return value;
         }
       }
-      throw new IllegalArgumentException("Unknown key: " + key);
+
+      return TeamSpawn.UNKNOWN;
     }
   }
 
@@ -102,7 +107,8 @@ public record GameOptions(AutoTeams autoTeams, TeamLock teamLock, TeamSpawn team
     DEMORALIZATION("demoralization", "Assasination"),
     DOMINATION("domination", "Supremacy"),
     ERADICATION("eradication", "Annihilation"),
-    SANDBOX("sandbox", "Sandbox");
+    SANDBOX("sandbox", "Sandbox"),
+    UNKNOWN("unknown", "Unknown");
 
     public final String readable;
 
@@ -114,13 +120,68 @@ public record GameOptions(AutoTeams autoTeams, TeamLock teamLock, TeamSpawn team
     }
 
     public static Victory findByKey(String key) {
-      for (Victory victory : values()) {
-        if (victory.key.equals(key)) {
-          return victory;
+      for (Victory value : values()) {
+        if (value.key.equals(key)) {
+          return value;
         }
       }
-      throw new IllegalArgumentException("Unknown key: " + key);
+
+      return Victory.UNKNOWN;
     }
   }
 
+  public enum SharedArmy {
+    OFF("demoralization", "Assasination"),
+    UNION("domination", "Supremacy"),
+    COMMON("eradication", "Annihilation"),
+    UNKNOWN("unknown", "Unknown");
+
+    public final String readable;
+
+    private final String key;
+
+    SharedArmy(String key, String readable) {
+      this.key = key;
+      this.readable = readable;
+    }
+
+    public static SharedArmy findByKey(String key) {
+      for (SharedArmy value : values()) {
+        if (value.key.equals(key)) {
+          return value;
+        }
+      }
+
+      return SharedArmy.UNKNOWN;
+    }
+  }
+
+  public enum Share {
+    FULLSHARE("FullShare", "Full share"),
+    SHAREUNTILDEATH("ShareUntilDeath", "Share until death"),
+    PARTIALSHARE("PartialShare", "Partial share"),
+    TRAITORS("TransferToKiller", "Traitors"),
+    DEFECTORS("Defectors", "Defectors"),
+    DESERTION("CivilianDeserter", "Desert to civilians"),
+    UNKNOWN("unknown", "Unknown");
+
+    public final String readable;
+
+    private final String key;
+
+    Share(String key, String readable) {
+      this.key = key;
+      this.readable = readable;
+    }
+
+    public static Share findByKey(String key) {
+      for (Share value : values()) {
+        if (value.key.equals(key)) {
+          return value;
+        }
+      }
+
+      return Share.UNKNOWN;
+    }
+  }
 }

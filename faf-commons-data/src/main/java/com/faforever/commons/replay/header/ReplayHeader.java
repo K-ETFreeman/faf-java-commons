@@ -8,7 +8,7 @@ import java.util.List;
 public record ReplayHeader(String gameVersion, String replayVersion, String pathToScenario, boolean cheatsEnabled, int seed,
                            List<Source> sources,
                            List<GameMod> mods,
-                           GameOptions gameOptions,
+                           GameScenario scenario,
                            List<PlayerOptions> playerOptions
 ) {
 }
