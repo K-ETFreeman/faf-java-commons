@@ -8,13 +8,13 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ModReaderTest {
 
@@ -26,6 +26,18 @@ class ModReaderTest {
   @BeforeEach
   public void setUp() {
     instance = new ModReader();
+  }
+
+  @Test
+  public void testModReadInfo() throws IOException {
+    Path modPath = temporaryFolder.resolve("mod-with-url");
+    Path modInfoPath = temporaryFolder.resolve("mod-with-url/mod_info.lua");
+    Files.createDirectory(modPath);
+    Files.copy(Objects.requireNonNull(getClass().getResourceAsStream("/mod/mod-with-url.lua")), modInfoPath);
+
+    Mod mod = instance.readDirectory(modPath);
+
+    assertEquals("https://github.com/JeroenDeDauw/NoAirCrashDamage", mod.getUrl());
   }
 
   @Test

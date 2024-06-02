@@ -1,0 +1,11 @@
+name = "50% Air Crash Damage"
+uid = "daeafcc2-0bcc-463a-962e-a33e703eacd1"
+version = 1
+copyright = "EntropyWins"
+description = "Reduces Air Crash damage to 50% of normal. Other versions reduce/increase to 150%, 75%, or 25%. Original mod 'No Air Crash Damage' by EntropyWins, modified by Rama."
+author = "EntropyWins + Rama"
+selectable = true
+ui_only = false
+enabled = true
+url = "https://github.com/JeroenDeDauw/NoAirCrashDamage"
+icon = "/mods/AirCrashDamage50/icon.jpg"
