@@ -146,6 +146,8 @@ data class GameInfo(
   val mapName: String?,
   @JsonProperty("map_file_path")
   val mapFilePath: String?,
+  @JsonProperty("hosted_at")
+  val hostedAt: String?,
   @JsonProperty("launched_at")
   val launchedAt: Double?,
   @Deprecated("Use teamIds instead")
