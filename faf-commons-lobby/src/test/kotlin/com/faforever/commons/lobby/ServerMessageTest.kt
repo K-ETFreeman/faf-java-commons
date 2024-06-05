@@ -196,7 +196,7 @@ class ServerMessageTest {
   fun deserializeGameInfoMessage() {
     val result = objectMapper.readValue<ServerMessage>(
       """
-        {"command":"game_info","visibility":"public","password_protected":false,"uid":13757471,"title":"Unit test","state":"closed","game_type":"custom","featured_mod":"faf","sim_mods":{},"mapname":"adaptive_archsimkats_valley.v0003","map_file_path":"maps/adaptive_archsimkats_valley.v0003.zip","host":"Brutus5000","num_players":0,"max_players":12,"launched_at":null,"rating_type":"global","rating_min":null,"rating_max":null,"enforce_rating_range":false,"teams":{}}
+        {"command":"game_info","visibility":"public","password_protected":false,"uid":13757471,"title":"Unit test","state":"closed","game_type":"custom","featured_mod":"faf","sim_mods":{},"mapname":"adaptive_archsimkats_valley.v0003","map_file_path":"maps/adaptive_archsimkats_valley.v0003.zip","host":"Brutus5000","num_players":0,"max_players":12,"hosted_at":"2024-02-06T12:45:50.000000010Z","launched_at":null,"rating_type":"global","rating_min":null,"rating_max":null,"enforce_rating_range":false,"teams":{}}
       """.trimIndent()
     )
 
@@ -216,6 +216,7 @@ class ServerMessageTest {
         mapOf(),
         "adaptive_archsimkats_valley.v0003",
         "maps/adaptive_archsimkats_valley.v0003.zip",
+        "2024-02-06T12:45:50.000000010Z",
         null,
         mapOf(),
         null,
