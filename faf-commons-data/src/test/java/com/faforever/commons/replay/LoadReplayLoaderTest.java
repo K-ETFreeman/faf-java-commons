@@ -10,11 +10,13 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class LoadReplayLoaderTest {
 
@@ -41,8 +43,9 @@ class LoadReplayLoaderTest {
 
         assertNoUnprocessedTokens(fafReplayContainer);
         assertNoErrorTokens(fafReplayContainer);
+        assertEquals("neroxis_map_generator_1.11.0_wvmzfgnlgiebu_bqgaeb3bgzldwstbaa", ReplaySemantics.getMapFolder(fafReplayContainer));
 
-        List<ChatMessage> chatMessages = ReplaySemantics.findChatMessages(fafReplayContainer.header().sources(), fafReplayContainer.registeredEvents());
+        List<ChatMessage> chatMessages = ReplaySemantics.getChatMessages(fafReplayContainer.registeredEvents());
         assertEquals(106, chatMessages.size());
       }
     );
@@ -58,8 +61,9 @@ class LoadReplayLoaderTest {
 
         assertNoUnprocessedTokens(fafReplayContainer);
         assertNoErrorTokens(fafReplayContainer);
+        assertEquals("SCMP_039", ReplaySemantics.getMapFolder(fafReplayContainer));
 
-        List<ChatMessage> chatMessages = ReplaySemantics.findChatMessages(fafReplayContainer.header().sources(), fafReplayContainer.registeredEvents());
+        List<ChatMessage> chatMessages = ReplaySemantics.getChatMessages(fafReplayContainer.registeredEvents());
         assertEquals(2, chatMessages.size());
       }
     );
@@ -75,8 +79,9 @@ class LoadReplayLoaderTest {
 
         assertNoUnprocessedTokens(fafReplayContainer);
         assertNoErrorTokens(fafReplayContainer);
+        assertEquals("dualgap_fix_adaptive.v0007", ReplaySemantics.getMapFolder(fafReplayContainer));
 
-        List<ChatMessage> chatMessages = ReplaySemantics.findChatMessages(fafReplayContainer.header().sources(), fafReplayContainer.registeredEvents());
+        List<ChatMessage> chatMessages = ReplaySemantics.getChatMessages(fafReplayContainer.registeredEvents());
         assertEquals(1, chatMessages.size());
       }
     );
@@ -92,8 +97,9 @@ class LoadReplayLoaderTest {
 
         assertNoUnprocessedTokens(fafReplayContainer);
         assertNoErrorTokens(fafReplayContainer);
+        assertEquals("SCMP_009", ReplaySemantics.getMapFolder(fafReplayContainer));
 
-        List<ChatMessage> chatMessages = ReplaySemantics.findChatMessages(fafReplayContainer.header().sources(), fafReplayContainer.registeredEvents());
+        List<ChatMessage> chatMessages = ReplaySemantics.getChatMessages(fafReplayContainer.registeredEvents());
         assertEquals(7, chatMessages.size());
       }
     );
@@ -109,8 +115,9 @@ class LoadReplayLoaderTest {
 
         assertNoUnprocessedTokens(fafReplayContainer);
         assertNoErrorTokens(fafReplayContainer);
+        assertEquals("SCMP_026", ReplaySemantics.getMapFolder(fafReplayContainer));
 
-        List<ChatMessage> chatMessages = ReplaySemantics.findChatMessages(fafReplayContainer.header().sources(), fafReplayContainer.registeredEvents());
+        List<ChatMessage> chatMessages = ReplaySemantics.getChatMessages(fafReplayContainer.registeredEvents());
         assertEquals(0, chatMessages.size());
       }
     );
@@ -126,8 +133,9 @@ class LoadReplayLoaderTest {
 
         assertNoUnprocessedTokens(fafReplayContainer);
         assertNoErrorTokens(fafReplayContainer);
+        assertEquals("SCMP_026", ReplaySemantics.getMapFolder(fafReplayContainer));
 
-        List<ChatMessage> chatMessages = ReplaySemantics.findChatMessages(fafReplayContainer.header().sources(), fafReplayContainer.registeredEvents());
+        List<ChatMessage> chatMessages = ReplaySemantics.getChatMessages(fafReplayContainer.registeredEvents());
         assertEquals(0, chatMessages.size());
       }
     );
@@ -143,8 +151,9 @@ class LoadReplayLoaderTest {
 
         assertNoUnprocessedTokens(fafReplayContainer);
         assertNoErrorTokens(fafReplayContainer);
+        assertEquals("SCMP_026", ReplaySemantics.getMapFolder(fafReplayContainer));
 
-        List<ChatMessage> chatMessages = ReplaySemantics.findChatMessages(fafReplayContainer.header().sources(), fafReplayContainer.registeredEvents());
+        List<ChatMessage> chatMessages = ReplaySemantics.getChatMessages(fafReplayContainer.registeredEvents());
         assertEquals(3, chatMessages.size());
       }
     );
@@ -160,10 +169,16 @@ class LoadReplayLoaderTest {
 
         assertEquals(2, fafReplayContainer.header().mods().size());
 
+        List<String> modUIDs = new ArrayList<>();
+        modUIDs.add("fnewm028-v096-55b4-92b6-64398e7ge43f");
+        modUIDs.add("d883189d-c556-4d68-b1c8-6ad201b3f7ad");
+        assertLinesMatch(modUIDs , ReplaySemantics.getModUIDs(fafReplayContainer));
+
         assertNoUnprocessedTokens(fafReplayContainer);
         assertNoErrorTokens(fafReplayContainer);
+        assertEquals("project_tumulus.v0004", ReplaySemantics.getMapFolder(fafReplayContainer));
 
-        List<ChatMessage> chatMessages = ReplaySemantics.findChatMessages(fafReplayContainer.header().sources(), fafReplayContainer.registeredEvents());
+        List<ChatMessage> chatMessages = ReplaySemantics.getChatMessages(fafReplayContainer.registeredEvents());
         assertEquals(0, chatMessages.size());
       }
     );
@@ -180,10 +195,12 @@ class LoadReplayLoaderTest {
     ReplayContainer fafReplayContainer = ReplayLoader.loadFAFReplayFromDisk(fafReplayFile);
     assertNoUnprocessedTokens(fafReplayContainer);
     assertNoErrorTokens(fafReplayContainer);
+    assertEquals("SCMP_026", ReplaySemantics.getMapFolder(fafReplayContainer));
 
     ReplayContainer scfaReplayContainer = ReplayLoader.loadSCFAReplayFromDisk(scfaReplayFile);
     assertNoUnprocessedTokens(scfaReplayContainer);
     assertNoErrorTokens(scfaReplayContainer);
+    assertEquals("SCMP_026", ReplaySemantics.getMapFolder(fafReplayContainer));
 
     assertEquals(scfaReplayContainer.registeredEvents().size(), fafReplayContainer.registeredEvents().size());
     assertArrayEquals( scfaReplayContainer.registeredEvents().toArray(), fafReplayContainer.registeredEvents().toArray());
@@ -200,10 +217,12 @@ class LoadReplayLoaderTest {
     ReplayContainer fafReplayContainer = ReplayLoader.loadFAFReplayFromDisk(fafReplayFile);
     assertNoUnprocessedTokens(fafReplayContainer);
     assertNoErrorTokens(fafReplayContainer);
+    assertEquals("open_palms_-_faf_version.v0002", ReplaySemantics.getMapFolder(fafReplayContainer));
 
     ReplayContainer scfaReplayContainer = ReplayLoader.loadSCFAReplayFromDisk(scfaReplayFile);
     assertNoUnprocessedTokens(scfaReplayContainer);
     assertNoErrorTokens(scfaReplayContainer);
+    assertEquals("open_palms_-_faf_version.v0002", ReplaySemantics.getMapFolder(fafReplayContainer));
 
     assertEquals(scfaReplayContainer.registeredEvents().size(), fafReplayContainer.registeredEvents().size());
     assertArrayEquals( scfaReplayContainer.registeredEvents().toArray(), fafReplayContainer.registeredEvents().toArray());
@@ -221,10 +240,12 @@ class LoadReplayLoaderTest {
     ReplayContainer fafReplayContainer = ReplayLoader.loadFAFReplayFromDisk(fafReplayFile);
     assertNoUnprocessedTokens(fafReplayContainer);
     assertNoErrorTokens(fafReplayContainer);
+    assertEquals("SCMP_026", ReplaySemantics.getMapFolder(fafReplayContainer));
 
     ReplayContainer scfaReplayContainer = ReplayLoader.loadSCFAReplayFromDisk(scfaReplayFile);
     assertNoUnprocessedTokens(scfaReplayContainer);
     assertNoErrorTokens(scfaReplayContainer);
+    assertEquals("SCMP_026", ReplaySemantics.getMapFolder(fafReplayContainer));
 
     assertEquals(scfaReplayContainer.registeredEvents().size(), fafReplayContainer.registeredEvents().size());
     assertArrayEquals( scfaReplayContainer.registeredEvents().toArray(), fafReplayContainer.registeredEvents().toArray());

@@ -103,10 +103,12 @@ public class ReplayHeaderParser {
       if (gameScenario instanceof LuaData.Table table) {
 
         // retrieve and manage the game options
+        String scenarioFile = null;
         GameOptions gameOptions = null;
         Map<String, String> modOptions = null;
         if (table.value().get("Options") instanceof LuaData.Table optionsTable) {
 
+          scenarioFile = optionsTable.getString("ScenarioFile");
           gameOptions = new GameOptions(
             GameOptions.AutoTeams.findByKey(optionsTable.getString("AutoTeams")),
             GameOptions.TeamLock.findByKey(optionsTable.getString("TeamLock")),
@@ -151,6 +153,7 @@ public class ReplayHeaderParser {
         }
 
         return new GameScenario(
+          scenarioFile,
           table.getString("map"),
           table.getInteger("map_version"),
           table.getString("description"),

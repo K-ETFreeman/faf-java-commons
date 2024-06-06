@@ -1,6 +1,7 @@
 package com.faforever.commons.replay;
 
 import com.faforever.commons.replay.body.Event;
+import com.faforever.commons.replay.header.GameMod;
 import com.faforever.commons.replay.header.Source;
 import com.faforever.commons.replay.shared.LuaData;
 
@@ -9,15 +10,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ReplaySemantics {
 
+  private static final Pattern invalidCharacters = Pattern.compile("[?@*%{}<>|\"]");
+
+  /**
+   * Small utility function to convert a tick to the equivalent game time.
+   *
+   * @param tick
+   * @return
+   */
   public static Duration tickToDuration(int tick) {
     return Duration.ofSeconds(tick / 10);
   }
 
   /**
    * Registers the events by attaching a tick and a source to them.
+   *
    * @param sources All input sources of the replay
    * @param events  All events of the replay
    * @return All events with the tick and input source attached
@@ -42,12 +54,44 @@ public class ReplaySemantics {
   }
 
   /**
-   * Retrieves all events that are chat messages
+   * Retrieves the UID of all mods.
+   *
+   * @param replayContainer The replay to retrieve the UIDs from
+   * @return A list of UIDs
+   */
+  public static List<String> getModUIDs(ReplayContainer replayContainer) {
+    return replayContainer.header().mods().stream().map(GameMod::uid).toList();
+  }
+
+  /**
+   * Retrieves the directory that contains the scenario file.
+   *
+   * @param replayContainer The replay to retrieve the folder from
+   * @return The directory that contains the scenario file
+   */
+  public static String getMapFolder (ReplayContainer replayContainer) throws IllegalArgumentException {
+    // /maps/SCMP_026/SCMP_026_script.lua
+    String pathToScenario = replayContainer.header().pathToScenario();
+    if (pathToScenario == null) {
+      return null;
+    }
+
+    Matcher matcher = invalidCharacters.matcher(pathToScenario);
+    if (matcher.find()) {
+      throw new IllegalArgumentException();
+    }
+
+    // SCMP_026
+    return pathToScenario.split("/")[2];
+  }
+
+  /**
+   * Retrieves all events that are chat messages.
    *
    * @param events A list of events
    * @return A list of events that are chat messages
    */
-  public static List<ChatMessage> findChatMessages(List<Source> sources, List<RegisteredEvent> events) {
+  public static List<ChatMessage> getChatMessages(List<RegisteredEvent> events) {
     return events.stream().map((registeredEvent) -> switch (registeredEvent.event()) {
 
       // TODO: the fact that we piggy-back on the 'GiveResourcesToPlayer' callback to embed chat messages is all wrong! We should instead introduce an alternative callback with the sole purpose to send messages.
@@ -100,12 +144,12 @@ public class ReplaySemantics {
   }
 
   /**
-   * Retrieves all events that are moderator related
+   * Retrieves all events that are related to moderation.
    *
    * @param events A list of events
-   * @return A list of events that are moderator related
+   * @return A list of events that are related to moderation
    */
-  public static List<ModeratorEvent> findModeratorMessages(List<Source> sources, List<RegisteredEvent> events) {
+  public static List<ModeratorEvent> getModeratorMessages(List<Source> sources, List<RegisteredEvent> events) {
     return events.stream().map((registeredEvent) -> switch (registeredEvent.event()) {
 
       // TODO: also read other interesting events, such as:

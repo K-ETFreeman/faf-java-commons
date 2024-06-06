@@ -4,8 +4,8 @@ public record ReplayBodyToken(TokenId tokenId, int tokenSize, byte[] tokenConten
 
   public enum TokenId {
     // Order is crucial
-    CMDST_ADVANCE,
-    CMDST_SET_COMMAND_SOURCE,
+    CMDST_ADVANCE,                    // advances the tick for the next tokens in the stream
+    CMDST_SET_COMMAND_SOURCE,         // sets the command source for the next tokens in the stream
     CMDST_COMMAND_SOURCE_TERMINATED,
     CMDST_VERIFY_CHECKSUM,
     CMDST_REQUEST_PAUSE,
