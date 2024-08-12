@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.0.0"
+kotlin = "2.0.10"
 jackson = "2.16.1"
 reactor = "3.6.8"
 mockito = "5.12.0"
