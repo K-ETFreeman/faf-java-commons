@@ -24,7 +24,7 @@ jsonapi-converter = { module = "com.github.jasminb:jsonapi-converter", version =
 q-builders = { module = "com.github.rutledgepaulv:q-builders", version = "1.6" }
 
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version = "5.10.3" }
-hamcrest-core = { module = "org.hamcrest:hamcrest-core", version = "2.2" }
+hamcrest-core = { module = "org.hamcrest:hamcrest-core", version = "3.0" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
 jsonassert = { module = "org.skyscreamer:jsonassert", version = "1.5.3" }
