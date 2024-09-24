@@ -14,7 +14,7 @@ jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
-guava = { module = "com.google.guava:guava", version = "33.2.1-jre" }
+guava = { module = "com.google.guava:guava", version = "33.3.1-jre" }
 reactor-core = { module = "io.projectreactor:reactor-core", version.ref = "reactor" }
 reactor-netty = { module = "io.projectreactor.netty:reactor-netty", version = "1.1.21" }
 luaj-jse = { module = "org.luaj:luaj-jse", version = "3.0.1" }
