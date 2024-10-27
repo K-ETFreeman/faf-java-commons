@@ -21,7 +21,7 @@ public class MatchmakerQueueMapPool extends AbstractEntity<MatchmakerQueueMapPoo
   @ToString.Include
   private Integer maxTokensPerMap;
   @ToString.Include
-  private Float minimalMapsAllowed;
+  private Float minimumMapsAfterVeto;
 
   @Relationship("matchmakerQueue")
   @ToString.Include
