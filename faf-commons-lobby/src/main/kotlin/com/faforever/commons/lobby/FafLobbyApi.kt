@@ -45,6 +45,7 @@ interface LobbyProtocolMessage {
   JsonSubTypes.Type(value = UnreadyPartyRequest::class, name = "unready_party"),
   JsonSubTypes.Type(value = SelectPartyFactionsRequest::class, name = "set_party_factions"),
   JsonSubTypes.Type(value = GameMatchmakingRequest::class, name = "game_matchmaking"),
+  JsonSubTypes.Type(value = SetPlayerVetoesRequest::class, name = "set_player_vetoes"),
   JsonSubTypes.Type(value = MatchmakerInfoRequest::class, name = "matchmaker_info"),
   JsonSubTypes.Type(value = AuthenticateRequest::class, name = "auth"),
   JsonSubTypes.Type(value = IsReadyResponse::class, name = "is_ready_response"),

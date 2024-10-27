@@ -2,6 +2,7 @@ package com.faforever.commons.lobby
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.OffsetDateTime
+import java.util.HashMap
 
 /**
  * API for all matchmaker related activities
@@ -144,6 +145,11 @@ internal data class GameMatchmakingRequest(
 internal data class InviteToPartyRequest(
   @JsonProperty("recipient_id")
   val playerId: Int
+) : ClientMessage
+
+internal data class SetPlayerVetoesRequest(
+  @JsonProperty("vetoes")
+  val vetoes: HashMap<Int, Int>
 ) : ClientMessage
 
 internal data class AcceptInviteToPartyRequest(
