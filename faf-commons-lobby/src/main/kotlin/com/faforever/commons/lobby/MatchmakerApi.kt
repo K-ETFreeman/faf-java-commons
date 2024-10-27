@@ -28,6 +28,8 @@ interface MatchmakerApi {
 
   fun setPartyFactions(factions: Set<Faction>)
 
+  fun setPlayerVetoes(vetoes: HashMap<Int, Int>)
+
   fun sendReady(requestId: String)
 
 }

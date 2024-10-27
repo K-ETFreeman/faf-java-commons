@@ -344,5 +344,7 @@ class FafLobbyClient(
 
   override fun setPartyFactions(factions: Set<Faction>) = send(SelectPartyFactionsRequest(factions))
 
+  override fun setPlayerVetoes(vetoes: HashMap<Int, Int>) = send(SetPlayerVetoesRequest(vetoes))
+
   override fun sendGpgGameMessage(message: GpgGameOutboundMessage) = send(message)
 }
