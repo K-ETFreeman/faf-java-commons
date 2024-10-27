@@ -28,7 +28,7 @@ interface MatchmakerApi {
 
   fun setPartyFactions(factions: Set<Faction>)
 
-  fun setPlayerVetoes(vetoes: HashMap<Int, Int>)
+  fun setPlayerVetoes(vetoes: Map<Int, Int>)
 
   fun sendReady(requestId: String)
 
@@ -151,7 +151,7 @@ internal data class InviteToPartyRequest(
 
 internal data class SetPlayerVetoesRequest(
   @JsonProperty("vetoes")
-  val vetoes: HashMap<Int, Int>
+  val vetoes: Map<Int, Int>
 ) : ClientMessage
 
 internal data class AcceptInviteToPartyRequest(
