@@ -2,7 +2,6 @@ package com.faforever.commons.lobby
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.OffsetDateTime
-import java.util.HashMap
 
 /**
  * API for all matchmaker related activities
