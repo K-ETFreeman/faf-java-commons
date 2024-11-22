@@ -47,7 +47,10 @@ class LobbyClientTest {
     }
   }
 
-  private val objectMapper: ObjectMapper = ObjectMapper().registerModule(KotlinModule()).registerModule(JavaTimeModule()).disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
+  private val objectMapper: ObjectMapper =
+    ObjectMapper().registerModule(KotlinModule.Builder().build()).registerModule(JavaTimeModule())
+      .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+      .enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE);
   private val token = "abc"
   private val serverReceivedSink = Sinks.many().unicast().onBackpressureBuffer<String>()
   private val serverMessagesReceived = serverReceivedSink.asFlux().publish().autoConnect()

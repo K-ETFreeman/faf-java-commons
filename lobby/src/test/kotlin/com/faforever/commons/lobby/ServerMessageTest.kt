@@ -17,7 +17,7 @@ class ServerMessageTest {
 
   companion object {
     val objectMapper: ObjectMapper = ObjectMapper()
-      .registerModule(KotlinModule())
+      .registerModule(KotlinModule.Builder().build())
       .registerModule(JavaTimeModule())
       .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
   }
