@@ -23,7 +23,7 @@ commons-compress = { module = "org.apache.commons:commons-compress", version = "
 jsonapi-converter = { module = "com.github.jasminb:jsonapi-converter", version = "0.14" }
 q-builders = { module = "com.github.rutledgepaulv:q-builders", version = "1.6" }
 
-junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version = "5.10.3" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version = "5.11.3" }
 hamcrest-core = { module = "org.hamcrest:hamcrest-core", version = "3.0" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
