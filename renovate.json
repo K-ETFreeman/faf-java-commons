@@ -1,0 +1,44 @@
+{
+  "extends": [
+    "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": [
+        "gradle-wrapper"
+      ],
+      "enabled": true,
+      "labels": [
+        "dependencies"
+      ]
+    },
+    {
+      "matchManagers": [
+        "gradle"
+      ],
+      "matchPackagePatterns": [
+        "^.*$"
+      ],
+      "enabled": true
+    },
+    {
+      "matchFiles": [
+        "gradle/libs.versions.toml"
+      ],
+      "matchDatasources": [
+        "gradle-version-catalog"
+      ],
+      "enabled": true,
+      "labels": [
+        "dependencies"
+      ]
+    },
+    {
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "automerge": true
+    }
+  ]
+}
