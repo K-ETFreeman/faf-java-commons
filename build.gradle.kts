@@ -9,7 +9,6 @@ configure(subprojects) {
   apply(plugin = "maven-publish")
 
   group = "com.faforever.commons"
-  version = "1.0-SNAPSHOT"
 
   repositories {
     mavenCentral()
