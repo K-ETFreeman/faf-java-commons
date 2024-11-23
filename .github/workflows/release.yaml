@@ -31,6 +31,6 @@ jobs:
           echo -n "${{ secrets.GPG_SIGNING_KEY }}" | base64 --decode > $HOME/secring.gpg
 
       - name: Publish package
-        run: ./gradlew publish -Pversion=$VERSION  -Psigning.secretKeyRingFile="$HOME/secring.gpg" -Psigning.password="${{ secrets.GPG_SIGNING_KEY_PASSWORD }}" -Psigning.keyId="${{ secrets.GPG_SIGNING_KEY_ID }}" -PsonatypeUsername="${{ secrets.SONATYPE_USERNAME }}" -PsonatypePassword="${{ secrets.SONATYPE_PASSWORD }}
+        run: ./gradlew publish -Pversion=$VERSION  -Psigning.secretKeyRingFile="$HOME/secring.gpg" -Psigning.password="${{ secrets.GPG_SIGNING_KEY_PASSWORD }}" -Psigning.keyId="${{ secrets.GPG_SIGNING_KEY_ID }}" -PsonatypeUsername="${{ secrets.SONATYPE_USERNAME }}" -PsonatypePassword="${{ secrets.SONATYPE_PASSWORD }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
