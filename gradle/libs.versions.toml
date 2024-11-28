@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.0.21"
-jackson = "2.18.1"
+jackson = "2.18.2"
 reactor = "3.7.0"
 mockito = "5.14.2"
 
