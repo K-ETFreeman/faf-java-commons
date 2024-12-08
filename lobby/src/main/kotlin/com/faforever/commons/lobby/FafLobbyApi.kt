@@ -67,6 +67,7 @@ interface ClientMessage : LobbyProtocolMessage
   JsonSubTypes.Type(value = SocialInfo::class, name = "social"),
   JsonSubTypes.Type(value = LoginFailedResponse::class, name = "authentication_failed"),
   JsonSubTypes.Type(value = NoticeInfo::class, name = "notice"),
+  JsonSubTypes.Type(value = VetoesChangedInfo::class, name = "vetoes_changed"),
   JsonSubTypes.Type(value = IceServerListResponse::class, name = "ice_servers"),
   JsonSubTypes.Type(value = AvatarListInfo::class, name = "avatar"),
   JsonSubTypes.Type(value = PartyInfo::class, name = "update_party"),

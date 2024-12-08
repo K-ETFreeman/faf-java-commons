@@ -54,6 +54,14 @@ data class NoticeInfo(
   val text: String?,
 ) : ServerMessage
 
+/**
+ * A message from the server (automated) to update vetoes of the user.
+ */
+data class VetoesChangedInfo(
+  val bracketsIds: List <Int>,
+  val vetoesData: List <VetoData>
+) : ServerMessage
+
 
 /**
  * The server assigns us a session id, onto which we will authorize.
