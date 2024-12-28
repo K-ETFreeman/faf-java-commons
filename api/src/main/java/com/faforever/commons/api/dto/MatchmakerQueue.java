@@ -15,6 +15,8 @@ public class MatchmakerQueue extends AbstractEntity<MatchmakerQueue> {
   private String technicalName;
   @ToString.Include
   private String nameKey;
+  @ToString.Include
+  private Integer teamSize;
 
   @Relationship("featuredMod")
   private FeaturedMod featuredMod;
