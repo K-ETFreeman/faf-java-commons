@@ -48,7 +48,7 @@ data class VetoData(
   @JsonProperty("veto_tokens_applied")
   val vetoTokensApplied: Int,
   @JsonProperty("matchmaker_queue_map_pool")
-  val matchmakerQueueMapPool: Int? = null
+  val matchmakerQueueMapPool: Int
 )
 
 
