@@ -54,6 +54,15 @@ data class NoticeInfo(
   val text: String?,
 ) : ServerMessage
 
+/**
+ * Error response from server when joining a game.
+ */
+data class GameJoinFailed (
+  @JsonProperty("uid")
+  val gameId: Int,
+  @JsonProperty("reason")
+  val reason: String?,
+) : ServerMessage
 
 /**
  * The server assigns us a session id, onto which we will authorize.

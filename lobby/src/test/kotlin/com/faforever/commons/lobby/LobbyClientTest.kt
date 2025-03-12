@@ -189,6 +189,24 @@ class LobbyClientTest {
   }
 
   @Test
+  fun testJoinGameFailed() {
+    val gameId = 789
+    val password = "testPassword"
+
+    val joinFailedEvent = GameJoinFailed(gameId, null)
+    serverMessagesReceived.filter { commandMatches(it, "game_join") }
+      .next()
+      .doOnNext {
+        sendFromServer(joinFailedEvent)
+      }
+      .subscribe()
+
+    StepVerifier.create(instance.requestJoinGame(gameId, password))
+      .expectError(GameJoinFailedException::class.java)
+      .verify(verificationDuration)
+  }
+
+  @Test
   fun testRestoreGameSession() {
     val stepVerifier = StepVerifier.create(serverMessagesReceived.take(1)).assertNext { assertCommandMatch(it, RestoreGameSessionRequest(0)) }.expectComplete().verifyLater()
 

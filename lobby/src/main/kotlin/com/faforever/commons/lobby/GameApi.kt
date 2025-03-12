@@ -22,6 +22,9 @@ interface GameApi {
     enforceRatingRange: Boolean
   ): Mono<GameLaunchResponse>
 
+  /**
+   * Mono can fail with GameJoinFailedException if the joining of the game fails
+   */
   fun requestJoinGame(gameId: Int, password: String?): Mono<GameLaunchResponse>
 
   fun restoreGameSession(gameId: Int)
