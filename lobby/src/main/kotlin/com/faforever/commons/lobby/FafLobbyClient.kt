@@ -286,14 +286,23 @@ class FafLobbyClient(
         .next()
     )
 
-  override fun requestJoinGame(gameId: Int, password: String?): Mono<GameLaunchResponse> =
-    Mono.fromCallable {
-      send(JoinGameRequest(gameId, password))
-    }.then(
-      events
-        .ofType(GameLaunchResponse::class.java)
-        .next()
-    )
+  override fun requestJoinGame(gameId: Int, password: String?): Mono<GameLaunchResponse> {
+    return Mono.fromCallable { send(JoinGameRequest(gameId, password)) }
+      .then(
+        events.filter { event ->
+          (event is GameJoinFailed && gameId == event.gameId) || (event is GameLaunchResponse && gameId == event.uid)
+        }
+          .flatMap { event ->
+            when (event) {
+              is GameJoinFailed -> Mono.error(GameJoinFailedException(gameId, event.reason))
+              is GameLaunchResponse -> Mono.just(event)
+              else -> Mono.empty()
+            }
+          }
+          .next()
+      )
+  }
+
 
   override fun restoreGameSession(gameId: Int) = send(RestoreGameSessionRequest(gameId))
 

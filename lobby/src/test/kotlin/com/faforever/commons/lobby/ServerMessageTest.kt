@@ -102,6 +102,16 @@ class ServerMessageTest {
   }
 
   @Test
+  fun deserializeGameJoinFailed() {
+    val result = objectMapper.readValue<ServerMessage>(
+      """
+      {"command":"game_join_failed","reason":"badpass", "uid": "1232"}
+    """.trimIndent()
+    )
+    assertEquals(GameJoinFailed(1232, "badpass"), result)
+  }
+
+  @Test
   fun deserializeSessionResponse() {
     val result = objectMapper.readValue<ServerMessage>(
       """
