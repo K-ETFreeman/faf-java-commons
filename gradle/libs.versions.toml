@@ -5,7 +5,7 @@ reactor = "3.7.4"
 mockito = "5.16.0"
 
 [libraries]
-lombok = { module = "org.projectlombok:lombok", version = "1.18.36" }
+lombok = { module = "org.projectlombok:lombok", version = "1.18.38" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.17" }
 jetbrains-annotations = { module = "org.jetbrains:annotations", version = "26.0.2" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.17" }
