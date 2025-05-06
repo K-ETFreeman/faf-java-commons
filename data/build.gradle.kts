@@ -17,6 +17,8 @@ dependencies {
 
   testAnnotationProcessor(libs.lombok)
   testCompileOnly(libs.lombok)
+  testImplementation(platform(libs.junit.bom))
+  testRuntimeOnly(libs.junit.platform.launcher)
   testImplementation(libs.junit.jupiter)
   testImplementation(libs.hamcrest.core)
   testImplementation(libs.mockito.core)

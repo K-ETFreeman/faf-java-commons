@@ -15,6 +15,8 @@ dependencies {
   compileOnly(libs.slf4j.api)
   compileOnly(libs.jackson.databind)
 
+  testImplementation(platform(libs.junit.bom))
+  testRuntimeOnly(libs.junit.platform.launcher)
   testImplementation(libs.junit.jupiter)
   testImplementation(libs.hamcrest.core)
   testImplementation(libs.mockito.core)
