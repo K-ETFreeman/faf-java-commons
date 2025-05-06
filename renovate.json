@@ -16,13 +16,13 @@
       "matchManagers": [
         "gradle"
       ],
-      "matchPackagePatterns": [
-        "^.*$"
-      ],
-      "enabled": true
+      "enabled": true,
+      "matchPackageNames": [
+        "/^.*$/"
+      ]
     },
     {
-      "matchFiles": [
+      "matchFileNames": [
         "gradle/libs.versions.toml"
       ],
       "matchDatasources": [
