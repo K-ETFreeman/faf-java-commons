@@ -1,7 +1,7 @@
 [versions]
 kotlin = "2.1.21"
 jackson = "2.19.0"
-reactor = "3.7.5"
+reactor = "3.7.6"
 mockito = "5.18.0"
 
 [libraries]
