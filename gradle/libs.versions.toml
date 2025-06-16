@@ -23,7 +23,7 @@ commons-compress = { module = "org.apache.commons:commons-compress", version = "
 jsonapi-converter = { module = "com.github.jasminb:jsonapi-converter", version = "0.14" }
 q-builders = { module = "com.github.rutledgepaulv:q-builders", version = "1.6" }
 
-junit-bom = { module = "org.junit:junit-bom", version = "5.12.2" }
+junit-bom = { module = "org.junit:junit-bom", version = "5.13.1" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 hamcrest-core = { module = "org.hamcrest:hamcrest-core", version = "3.0" }
