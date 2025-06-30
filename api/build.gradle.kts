@@ -1,5 +1,5 @@
 plugins {
-  id("com.vanniktech.maven.publish") version "0.33.0"
+  alias(libs.plugins.com.vanniktech.maven.publish)
 }
 
 java {

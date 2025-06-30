@@ -1,6 +1,7 @@
 plugins {
   alias(libs.plugins.kotlin.jvm) apply false
   alias(libs.plugins.test.logger) apply false
+  alias(libs.plugins.com.vanniktech.maven.publish) apply false
 }
 
 configure(subprojects) {
