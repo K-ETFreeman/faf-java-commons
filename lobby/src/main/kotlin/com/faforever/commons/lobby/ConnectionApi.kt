@@ -59,7 +59,7 @@ data class NoticeInfo(
  */
 data class VetoesChangedInfo(
   val forced: Boolean,
-  val vetoesData: List <VetoData>
+  val vetoes: List <VetoData>
 ) : ServerMessage
 
 /**
