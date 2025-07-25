@@ -58,6 +58,7 @@ data class NoticeInfo(
  * A message from the server (automated) to update vetoes of the user.
  */
 data class VetoesChangedInfo(
+  val forced: Boolean,
   val vetoesData: List <VetoData>
 ) : ServerMessage
 
