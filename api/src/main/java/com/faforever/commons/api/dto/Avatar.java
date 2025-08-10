@@ -17,6 +17,7 @@ public class Avatar extends AbstractEntity<Avatar> {
   @ToString.Include
   private String url;
   private String tooltip;
+  private String description;
   @Relationship("assignments")
   @JsonIgnore
   private List<AvatarAssignment> assignments;
