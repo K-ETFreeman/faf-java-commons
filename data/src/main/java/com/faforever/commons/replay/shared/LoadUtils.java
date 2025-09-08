@@ -1,10 +1,8 @@
 package com.faforever.commons.replay.shared;
 
-import com.google.common.io.LittleEndianDataInputStream;
 import org.jetbrains.annotations.Contract;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,38 +10,39 @@ import java.util.Map;
 public class LoadUtils {
 
   @Contract(pure = true)
-  private static int peek(LittleEndianDataInputStream dataStream) throws IOException {
-    dataStream.mark(1);
-    int next = dataStream.readUnsignedByte();
-    dataStream.reset();
+  private static int peek(ByteBuffer buffer) {
+    buffer.mark();
+    int next = getUnsignedByte(buffer);
+    buffer.reset();
     return next;
   }
 
   /**
    * Parses a value from the data stream
-   * @param dataStream
+   *
+   * @param buffer
    * @return
-   * @throws IOException
    */
   @Contract(pure = true)
-  public static String readString(LittleEndianDataInputStream dataStream) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    byte tempByte;
-    while ((tempByte = dataStream.readByte()) != 0) {
-      out.write(tempByte);
+  public static String readString(ByteBuffer buffer){
+    final int offset = buffer.position();
+    while (buffer.get() != 0) {
     }
-    return out.toString(StandardCharsets.UTF_8);
+    final int length = buffer.position() - 1 - offset;
+    byte[] stringBytes = new byte[length];
+    buffer.get(offset, stringBytes, 0, length);
+    return new String(stringBytes, StandardCharsets.UTF_8);
   }
 
   /**
    * Parses a Lua table from the data stream
-   * @param dataStream
+   *
+   * @param buffer
    * @return
-   * @throws IOException
    */
   @Contract(pure = true)
-  public static LuaData parseLua(LittleEndianDataInputStream dataStream) throws IOException {
-    int type = dataStream.readUnsignedByte();
+  public static LuaData parseLua(ByteBuffer buffer) {
+    int type = getUnsignedByte(buffer);
 
     final int LUA_NUMBER = 0;
     final int LUA_STRING = 1;
@@ -54,12 +53,12 @@ public class LoadUtils {
 
     switch (type) {
       case LUA_NUMBER -> {
-        float value = dataStream.readFloat();
+        float value = buffer.getFloat();
         return new LuaData.Number(value);
       }
 
       case LUA_STRING -> {
-        String value = readString(dataStream);
+        String value = readString(buffer);
         return new LuaData.String(value);
       }
 
@@ -68,30 +67,34 @@ public class LoadUtils {
       }
 
       case LUA_BOOL -> {
-        boolean value = dataStream.readUnsignedByte() == 0;
+        boolean value = getUnsignedByte(buffer) == 0;
         return new LuaData.Bool(value);
       }
 
       case LUA_TABLE_START -> {
         Map<String, LuaData> value = new HashMap<>();
-        while (peek(dataStream) != LUA_TABLE_END) {
-          LuaData key = parseLua(dataStream);
+        while (peek(buffer) != LUA_TABLE_END) {
+          LuaData key = parseLua(buffer);
 
           switch (key) {
-            case LuaData.String(String str) -> value.put(str, parseLua(dataStream));
+            case LuaData.String(String str) -> value.put(str, parseLua(buffer));
 
-            case LuaData.Number(float num) -> value.put(String.valueOf(num), parseLua(dataStream));
+            case LuaData.Number(float num) -> value.put(String.valueOf(num), parseLua(buffer));
 
             default -> throw new IllegalStateException("Unexpected data type: " + type);
           }
 
-          dataStream.mark(1);
+          buffer.mark();
         }
-        dataStream.skipBytes(1);
+        buffer.get();
 
         return new LuaData.Table(value);
       }
       default -> throw new IllegalStateException("Unexpected data type: " + type);
     }
+  }
+
+  public static int getUnsignedByte(ByteBuffer buffer) {
+    return buffer.get() & 0xFF;
   }
 }

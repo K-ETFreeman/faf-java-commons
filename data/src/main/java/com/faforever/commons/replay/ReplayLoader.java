@@ -10,7 +10,6 @@ import com.faforever.commons.replay.header.Source;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.BaseEncoding;
-import com.google.common.io.LittleEndianDataInputStream;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorInputStream;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
@@ -22,6 +21,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,29 +33,33 @@ import java.util.Objects;
 public class ReplayLoader {
 
   @Contract(pure = true)
-  private static ReplayHeader loadSCFAReplayHeader(LittleEndianDataInputStream stream) throws IOException {
-    return ReplayHeaderParser.parse(stream);
+  private static ReplayHeader loadSCFAReplayHeader(ByteBuffer buffer) {
+    return ReplayHeaderParser.parse(buffer);
   }
 
   @Contract(pure = true)
-  private static @NotNull List<RegisteredEvent> loadSCFAReplayBody(List<Source> sources, LittleEndianDataInputStream stream) throws IOException {
-    List<ReplayBodyToken> bodyTokens = ReplayBodyTokenizer.tokenize(stream);
-    List<Event> bodyEvents = ReplayBodyParser.parseTokens(bodyTokens);
+  private static @NotNull List<RegisteredEvent> loadSCFAReplayBody(List<Source> sources, ByteBuffer buffer) {
+    var rewindPosition = buffer.position();
+    List<ReplayBodyToken> bodyTokens = ReplayBodyTokenizer.tokenize(buffer);
+    buffer.position(rewindPosition);
+
+    List<Event> bodyEvents = ReplayBodyParser.parseTokens(bodyTokens, buffer);
     return ReplaySemantics.registerEvents(sources, bodyEvents);
   }
 
   @Contract(pure = true)
   private static ReplayContainer loadSCFAReplayFromMemory(ReplayMetadata metadata, byte[] scfaReplayBytes) throws IOException {
-    try (LittleEndianDataInputStream stream = new LittleEndianDataInputStream((new ByteArrayInputStream(scfaReplayBytes)))) {
-      ReplayHeader replayHeader = loadSCFAReplayHeader(stream);
-      List<RegisteredEvent> replayBody = loadSCFAReplayBody(replayHeader.sources(), stream);
+    final ByteBuffer buffer = ByteBuffer.wrap(scfaReplayBytes);
+    buffer.order(ByteOrder.LITTLE_ENDIAN);
 
-      if (stream.available() > 0) {
-        throw new EOFException();
-      }
+    ReplayHeader replayHeader = loadSCFAReplayHeader(buffer);
+    List<RegisteredEvent> replayBody = loadSCFAReplayBody(replayHeader.sources(), buffer);
 
-      return new ReplayContainer(metadata, replayHeader, replayBody);
+    if (buffer.position() != buffer.limit()) {
+      throw new EOFException();
     }
+
+    return new ReplayContainer(metadata, replayHeader, replayBody);
   }
 
   public static ReplayContainer loadSCFAReplayFromDisk(Path scfaReplayFile) throws IOException, IllegalArgumentException {

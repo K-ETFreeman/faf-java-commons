@@ -3,14 +3,14 @@ package com.faforever.commons.replay;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.LittleEndianDataInputStream;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,6 +22,7 @@ import java.util.Objects;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 class ReplayLoaderTableParserTest {
 
@@ -59,14 +60,13 @@ class ReplayLoaderTableParserTest {
   }
 
   @Test
-  void testReadString() throws Exception {
+  void testReadString() {
     String unicodeString = "Oh, helloäöüthere!";
 
     byte[] stringBytes = (unicodeString + "\0").getBytes(StandardCharsets.UTF_8);
-    ByteArrayInputStream byteInputStream = new ByteArrayInputStream(stringBytes);
-    LittleEndianDataInputStream dataInputStream = new LittleEndianDataInputStream(byteInputStream);
-
-    String result = ReplayDataParser.readString(dataInputStream);
+    ByteBuffer buffer = ByteBuffer.wrap(stringBytes);
+    buffer.order(ByteOrder.LITTLE_ENDIAN);
+    String result = ReplayDataParser.readString(buffer);
 
     assertThat(result, is(unicodeString));
   }
@@ -137,5 +137,5 @@ class ReplayLoaderTableParserTest {
     ModeratorEvent firstEvent = moderatorEvents.getFirst();
     assertEquals(Duration.ofSeconds(20), firstEvent.time());
     assertEquals("Created a marker with the text: 'my fabelous marker test'", firstEvent.message());
-    }
+  }
 }
