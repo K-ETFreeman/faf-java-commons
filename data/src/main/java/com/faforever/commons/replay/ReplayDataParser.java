@@ -359,42 +359,36 @@ public class ReplayDataParser {
   }
 
   private void parseGiveResourcesToPlayer(LuaData.Table lua) {
-    LuaData msg;
-    LuaData from;
-    LuaData sender;
-    if ((msg = lua.value().get("Msg")) != null && (from = lua.value().get("From")) != null && (sender = lua.value().get("Sender")) != null) {
+    // TODO: use the command source (player value) instead of the values from the callback. The values from the callback can be manipulated
+    if (!(lua.value().get("From") instanceof LuaData.Number(float luaFromArmy))) {
+      return;
+    }
 
-      // TODO: use the command source (player value) instead of the values from the callback. The values from the callback can be manipulated
-      if (!(from instanceof LuaData.Number(float luaFromArmy))) {
-        return;
-      }
+    int fromArmy = (int) luaFromArmy - 1;
+    if (fromArmy == -2) {
+      return;
+    }
 
-      int fromArmy = (int) luaFromArmy - 1;
-      if (fromArmy == -2) {
-        return;
-      }
+    if (!(lua.value().get("Msg") instanceof LuaData.Table(Map<String, LuaData> luaMsg))) {
+      return;
+    }
 
-      if (!(msg instanceof LuaData.Table(Map<String, LuaData> luaMsg))) {
-        return;
-      }
+    if (!(lua.value().get("Sender") instanceof LuaData.String(String luaSender))) {
+      return;
+    }
 
-      if (!(sender instanceof LuaData.String(String luaSender))) {
-        return;
-      }
+    // This can either be a player name or a Map of something, in which case it's actually giving resources
+    if (!(luaMsg.get("to") instanceof LuaData.String(String luaMsgReceiver))) {
+      return;
+    }
 
-      // This can either be a player name or a Map of something, in which case it's actually giving resources
-      if (!(luaMsg.get("to") instanceof LuaData.String(String luaMsgReceiver))) {
-        return;
-      }
+    if (!(luaMsg.get("text") instanceof LuaData.String(String luaMsgText))) {
+      return;
+    }
 
-      if (!(luaMsg.get("text") instanceof LuaData.String(String luaMsgText))) {
-        return;
-      }
-
-      Map<String, Object> army = armies.get(fromArmy);
-      if (army != null && Objects.equals(army.get("PlayerName"), luaSender)) {
-        chatMessages.add(new ChatMessage(tickToTime(ticks), luaSender, String.valueOf(luaMsgReceiver), luaMsgText));
-      }
+    Map<String, Object> army = armies.get(fromArmy);
+    if (army != null && Objects.equals(army.get("PlayerName"), luaSender)) {
+      chatMessages.add(new ChatMessage(tickToTime(ticks), luaSender, String.valueOf(luaMsgReceiver), luaMsgText));
     }
   }
 
@@ -440,18 +434,18 @@ public class ReplayDataParser {
   }
 
   private void parse() throws IOException, CompressorException {
-      readReplayData(path);
+    readReplayData(path);
 
-      final ByteBuffer buffer = ByteBuffer.wrap(data);
-      buffer.order(ByteOrder.LITTLE_ENDIAN);
+    final ByteBuffer buffer = ByteBuffer.wrap(data);
+    buffer.order(ByteOrder.LITTLE_ENDIAN);
 
-      parseHeader(buffer);
+    parseHeader(buffer);
 
-      var rewindPosition = buffer.position();
-      tokens = ReplayBodyTokenizer.tokenize(buffer);
-      buffer.position(rewindPosition);
+    var rewindPosition = buffer.position();
+    tokens = ReplayBodyTokenizer.tokenize(buffer);
+    buffer.position(rewindPosition);
 
-      events = ReplayBodyParser.parseTokens(tokens, buffer);
-      interpretEvents(events);
+    events = ReplayBodyParser.parseTokens(tokens, buffer);
+    interpretEvents(events);
   }
 }
