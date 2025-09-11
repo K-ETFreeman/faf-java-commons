@@ -8,7 +8,6 @@ import com.faforever.commons.replay.shared.LoadUtils;
 import com.faforever.commons.replay.shared.LuaData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.BaseEncoding;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.compressors.CompressorException;
@@ -46,7 +45,7 @@ public class ReplayDataParser {
   @Getter
   private String replayPatchFieldId;
   @Getter
-  private byte[] data;
+  private ByteBuffer data;
   @Getter
   private String map;
   @Getter
@@ -129,13 +128,19 @@ public class ReplayDataParser {
   private void readReplayData(Path replayFile) throws IOException, CompressorException {
     byte[] allReplayData = Files.readAllBytes(replayFile);
     int headerEnd = findReplayHeaderEnd(allReplayData);
-    metadata = objectMapper.readValue(new String(Arrays.copyOf(allReplayData, headerEnd), StandardCharsets.UTF_8), ReplayMetadata.class);
-    data = decompress(Arrays.copyOfRange(allReplayData, headerEnd + 1, allReplayData.length), metadata);
+    ByteBuffer buffer = ByteBuffer.wrap(allReplayData);
+
+    buffer.limit(headerEnd);
+    final String decodedMetadata = StandardCharsets.UTF_8.newDecoder().decode(buffer).toString();
+    metadata = objectMapper.readValue(decodedMetadata, ReplayMetadata.class);
+    buffer.limit(buffer.capacity());
+
+    buffer.position(headerEnd + 1);
+    data = decompress(buffer, metadata);
   }
 
   private int findReplayHeaderEnd(byte[] replayData) {
-    int headerEnd;
-    for (headerEnd = 0; headerEnd < replayData.length; headerEnd++) {
+    for (int headerEnd = 0; headerEnd < replayData.length; headerEnd++) {
       if (replayData[headerEnd] == '\n') {
         return headerEnd;
       }
@@ -143,20 +148,22 @@ public class ReplayDataParser {
     throw new IllegalArgumentException("Missing separator between replay header and body");
   }
 
-  private byte[] decompress(byte[] data, @NotNull ReplayMetadata metadata) throws IOException, CompressorException {
+  private ByteBuffer decompress(ByteBuffer inputBuffer, @NotNull ReplayMetadata metadata) throws IOException, CompressorException {
     CompressionType compressionType = Objects.requireNonNullElse(metadata.getCompression(), CompressionType.QTCOMPRESS);
 
     switch (compressionType) {
       case QTCOMPRESS: {
-        return QtCompress.qUncompress(BaseEncoding.base64().decode(new String(data)));
+        return QtCompress.qUncompress(Base64.getDecoder().decode(inputBuffer));
       }
       case ZSTD: {
-        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(data);
+        byte[] inputArray = new byte[inputBuffer.remaining()];
+        inputBuffer.get(inputArray);
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(inputArray);
         CompressorInputStream compressorInputStream = new CompressorStreamFactory().createCompressorInputStream(arrayInputStream);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         IOUtils.copy(compressorInputStream, out);
-        return out.toByteArray();
+        return ByteBuffer.wrap(out.toByteArray());
       }
       case UNKNOWN:
       default:
@@ -249,7 +256,7 @@ public class ReplayDataParser {
           previousTick = ticks;
 
           if (desync) {
-            log.warn("Replay desynced");
+//            log.warn("Replay desynced");
             return;
           }
         }
@@ -435,17 +442,15 @@ public class ReplayDataParser {
 
   private void parse() throws IOException, CompressorException {
     readReplayData(path);
+    data.order(ByteOrder.LITTLE_ENDIAN);
 
-    final ByteBuffer buffer = ByteBuffer.wrap(data);
-    buffer.order(ByteOrder.LITTLE_ENDIAN);
+    parseHeader(data);
 
-    parseHeader(buffer);
+    var rewindPosition = data.position();
+    tokens = ReplayBodyTokenizer.tokenize(data);
+    data.position(rewindPosition);
 
-    var rewindPosition = buffer.position();
-    tokens = ReplayBodyTokenizer.tokenize(buffer);
-    buffer.position(rewindPosition);
-
-    events = ReplayBodyParser.parseTokens(tokens, buffer);
+    events = ReplayBodyParser.parseTokens(tokens, data);
     interpretEvents(events);
   }
 }

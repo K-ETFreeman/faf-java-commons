@@ -9,11 +9,10 @@ import com.faforever.commons.replay.header.ReplayHeaderParser;
 import com.faforever.commons.replay.header.Source;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.io.BaseEncoding;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorInputStream;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
-import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +25,7 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 
@@ -48,14 +47,13 @@ public class ReplayLoader {
   }
 
   @Contract(pure = true)
-  private static ReplayContainer loadSCFAReplayFromMemory(ReplayMetadata metadata, byte[] scfaReplayBytes) throws IOException {
-    final ByteBuffer buffer = ByteBuffer.wrap(scfaReplayBytes);
-    buffer.order(ByteOrder.LITTLE_ENDIAN);
+  private static ReplayContainer loadSCFAReplayFromMemory(ReplayMetadata metadata, ByteBuffer scfaReplayBuffer) throws IOException {
+    scfaReplayBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
-    ReplayHeader replayHeader = loadSCFAReplayHeader(buffer);
-    List<RegisteredEvent> replayBody = loadSCFAReplayBody(replayHeader.sources(), buffer);
+    ReplayHeader replayHeader = loadSCFAReplayHeader(scfaReplayBuffer);
+    List<RegisteredEvent> replayBody = loadSCFAReplayBody(replayHeader.sources(), scfaReplayBuffer);
 
-    if (buffer.position() != buffer.limit()) {
+    if (scfaReplayBuffer.position() != scfaReplayBuffer.limit()) {
       throw new EOFException();
     }
 
@@ -68,22 +66,25 @@ public class ReplayLoader {
     }
 
     byte[] bytes = Files.readAllBytes(scfaReplayFile);
-    return loadSCFAReplayFromMemory(null, bytes);
+    return loadSCFAReplayFromMemory(null, ByteBuffer.wrap(bytes));
   }
 
   @Contract(pure = true)
   private static ReplayContainer loadFAFReplayFromMemory(byte[] fafReplayBytes) throws IOException, CompressorException {
     int separator = findSeparatorIndex(fafReplayBytes);
-    byte[] metadataBytes = Arrays.copyOfRange(fafReplayBytes, 0, separator);
-    String metadataString = new String(metadataBytes, StandardCharsets.UTF_8);
+    ByteBuffer buffer = ByteBuffer.wrap(fafReplayBytes);
+
+    buffer.limit(separator);
+    final String decodedMetadata = StandardCharsets.UTF_8.newDecoder().decode(buffer).toString();
 
     ObjectMapper parsedMetadata = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    ReplayMetadata replayMetadata = parsedMetadata.readValue(metadataString, ReplayMetadata.class);
+    ReplayMetadata replayMetadata = parsedMetadata.readValue(decodedMetadata, ReplayMetadata.class);
+    buffer.limit(buffer.capacity());
 
-    byte[] compressedReplayBytes = Arrays.copyOfRange(fafReplayBytes, separator + 1, fafReplayBytes.length);
-    byte[] scfaReplayBytes = decompress(compressedReplayBytes, replayMetadata);
+    buffer.position(separator + 1);
+    ByteBuffer scfaReplayBuffer= decompress(buffer, replayMetadata);
 
-    return loadSCFAReplayFromMemory(replayMetadata, scfaReplayBytes);
+    return loadSCFAReplayFromMemory(replayMetadata, scfaReplayBuffer);
   }
 
   public static ReplayContainer loadFAFReplayFromDisk(Path fafReplayFile) throws IOException, CompressorException, IllegalArgumentException {
@@ -96,8 +97,7 @@ public class ReplayLoader {
   }
 
   private static int findSeparatorIndex(byte[] replayData) {
-    int headerEnd;
-    for (headerEnd = 0; headerEnd < replayData.length; headerEnd++) {
+    for (int headerEnd = 0; headerEnd < replayData.length; headerEnd++) {
       if (replayData[headerEnd] == '\n') {
         return headerEnd;
       }
@@ -105,21 +105,22 @@ public class ReplayLoader {
     throw new IllegalArgumentException("Missing separator between replay header and body");
   }
 
-  private static byte[] decompress(byte[] data, @NotNull ReplayMetadata metadata) throws IOException, CompressorException {
+  private static ByteBuffer decompress(ByteBuffer inputBuffer, @NotNull ReplayMetadata metadata) throws IOException, CompressorException {
     CompressionType compressionType = Objects.requireNonNullElse(metadata.getCompression(), CompressionType.QTCOMPRESS);
 
     switch (compressionType) {
       case QTCOMPRESS: {
-        return QtCompress.qUncompress(BaseEncoding.base64().decode(new String(data)));
+        return QtCompress.qUncompress(Base64.getDecoder().decode(inputBuffer));
       }
       case ZSTD: {
-        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(data);
-        CompressorInputStream compressorInputStream = new CompressorStreamFactory()
-          .createCompressorInputStream(arrayInputStream);
+        byte[] inputArray = new byte[inputBuffer.remaining()];
+        inputBuffer.get(inputArray);
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(inputArray);
+        CompressorInputStream compressorInputStream = new CompressorStreamFactory().createCompressorInputStream(arrayInputStream);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         IOUtils.copy(compressorInputStream, out);
-        return out.toByteArray();
+        return ByteBuffer.wrap(out.toByteArray());
       }
       case UNKNOWN:
       default:

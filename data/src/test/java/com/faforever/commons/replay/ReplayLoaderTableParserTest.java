@@ -18,7 +18,6 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -109,7 +108,7 @@ class ReplayLoaderTableParserTest {
     Files.copy(getClass().getResourceAsStream("/replay/zstd_reference.fafreplay"), replayFile);
     Files.copy(getClass().getResourceAsStream("/replay/zstd_reference.raw"), referenceFile);
 
-    byte[] data = new ReplayDataParser(replayFile, objectMapper).getData();
+    byte[] data = new ReplayDataParser(replayFile, objectMapper).getData().array();
     byte[] reference = Files.readAllBytes(referenceFile);
     assertThat("Zstd compressed replay matches reference", Arrays.equals(data, reference));
   }
@@ -121,7 +120,7 @@ class ReplayLoaderTableParserTest {
     Files.copy(getClass().getResourceAsStream("/replay/test.fafreplay"), replayFile);
     Files.copy(getClass().getResourceAsStream("/replay/test.raw"), referenceFile);
 
-    byte[] data = new ReplayDataParser(replayFile, objectMapper).getData();
+    byte[] data = new ReplayDataParser(replayFile, objectMapper).getData().array();
     byte[] reference = Files.readAllBytes(referenceFile);
     assertThat("Legacy compressed file matches reference", Arrays.equals(data, reference));
   }
