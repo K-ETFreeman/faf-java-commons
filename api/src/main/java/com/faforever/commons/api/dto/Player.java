@@ -42,9 +42,14 @@ public class Player extends AbstractEntity<Player> {
   @Relationship("lobbyGroup")
   private LobbyGroup lobbyGroup;
 
+  @Deprecated
   @Relationship("uniqueIds")
   @RestrictedVisibility("IsModerator")
   private Set<UniqueId> uniqueIds;
+
+  @Relationship("uniqueIdAssignments")
+  @RestrictedVisibility("IsModerator")
+  private Set<UniqueIdAssignment> uniqueIdAssignments;
 
   @Relationship("accountLinks")
   @RestrictedVisibility("IsModerator")
