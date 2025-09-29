@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.apache.maven.artifact.versioning.ComparableVersion;
-import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 import java.util.List;
@@ -38,11 +37,6 @@ public class MapVersion extends AbstractEntity<MapVersion> {
   @Relationship("statistics")
   @Deprecated
   private MapVersionStatistics statistics;
-
-  @Deprecated
-  @Nullable
-  @Relationship("ladder1v1Map")
-  private Ladder1v1Map ladder1v1Map;
 
   @Relationship("reviews")
   private List<MapVersionReview> reviews;
