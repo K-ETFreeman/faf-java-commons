@@ -1,24 +1,21 @@
 package com.faforever.commons.api.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.github.jasminb.jsonapi.annotations.Relationship;
 import com.github.jasminb.jsonapi.annotations.Type;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-import java.util.List;
-
-@Type("avatar")
 @Data
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = true)
-public class Avatar extends AbstractEntity<Avatar> {
-  @ToString.Include
-  private String url;
-  private String tooltip;
-  private String description;
-  @Relationship("assignments")
-  @JsonIgnore
-  private List<AvatarAssignment> assignments;
+@Type("uniqueIdAssignment")
+@RestrictedVisibility("IsModerator")
+public class UniqueIdAssignment extends AbstractEntity<UniqueIdAssignment> {
+
+  @Relationship("player")
+  private Player player;
+
+  @Relationship("uniqueId")
+  private UniqueId uniqueId;
 }

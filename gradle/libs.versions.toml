@@ -1,29 +1,31 @@
 [versions]
-kotlin = "2.1.10"
-jackson = "2.18.3"
-reactor = "3.7.4"
-mockito = "5.16.0"
+kotlin = "2.2.0"
+jackson = "2.19.2"
+reactor = "3.7.7"
+mockito = "5.18.0"
 
 [libraries]
-lombok = { module = "org.projectlombok:lombok", version = "1.18.36" }
+lombok = { module = "org.projectlombok:lombok", version = "1.18.38" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.17" }
 jetbrains-annotations = { module = "org.jetbrains:annotations", version = "26.0.2" }
-logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.17" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version = "1.5.19" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson" }
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
 jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
-guava = { module = "com.google.guava:guava", version = "33.4.0-jre" }
+guava = { module = "com.google.guava:guava", version = "33.4.8-jre" }
 reactor-core = { module = "io.projectreactor:reactor-core", version.ref = "reactor" }
-reactor-netty = { module = "io.projectreactor.netty:reactor-netty", version = "1.2.4" }
+reactor-netty = { module = "io.projectreactor.netty:reactor-netty", version = "1.2.10" }
 luaj-jse = { module = "org.luaj:luaj-jse", version = "3.0.1" }
 zstd-jni = { module = "com.github.luben:zstd-jni", version = "1.5.2-5" } # >=1.5.4-1 fails
 commons-compress = { module = "org.apache.commons:commons-compress", version = "1.27.1" }
 jsonapi-converter = { module = "com.github.jasminb:jsonapi-converter", version = "0.14" }
 q-builders = { module = "com.github.rutledgepaulv:q-builders", version = "1.6" }
 
-junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version = "5.11.4" }
+junit-bom = { module = "org.junit:junit-bom", version = "5.13.4" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 hamcrest-core = { module = "org.hamcrest:hamcrest-core", version = "3.0" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
@@ -35,3 +37,4 @@ pojo-tester = { module = "pl.pojo:pojo-tester", version = "0.7.6" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-plugin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
 test-logger = { id = "com.adarshr.test-logger", version = "4.0.0" }
+com-vanniktech-maven-publish = { id = "com.vanniktech.maven.publish", version = "0.33.0" }

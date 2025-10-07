@@ -1,6 +1,6 @@
 package com.faforever.commons.api.elide;
 
-import com.faforever.commons.api.dto.Ladder1v1Map;
+import com.faforever.commons.api.dto.MapPool;
 import com.faforever.commons.api.dto.MapPoolAssignment;
 import com.faforever.commons.api.dto.MapVersion;
 import com.github.rutledgepaulv.qbuilders.conditions.Condition;
@@ -14,58 +14,58 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ElideNavigatorTest {
   @Test
   void testGetList() {
-    assertThat(ElideNavigator.of(Ladder1v1Map.class).collection().build(), is("/data/ladder1v1Map"));
+    assertThat(ElideNavigator.of(MapPool.class).collection().build(), is("/data/mapPool"));
   }
 
   @Test
   void testGetId() {
-    assertThat(ElideNavigator.of(Ladder1v1Map.class).id("5").build(), is("/data/ladder1v1Map/5"));
+    assertThat(ElideNavigator.of(MapPool.class).id("5").build(), is("/data/mapPool/5"));
   }
 
   @Test
   void testGetListSingleInclude() {
-    assertThat(ElideNavigator.of(Ladder1v1Map.class)
+    assertThat(ElideNavigator.of(MapPool.class)
                              .collection()
                              .addInclude("mapVersion")
-                             .build(), is("/data/ladder1v1Map?include=mapVersion"));
+                             .build(), is("/data/mapPool?include=mapVersion"));
   }
 
   @Test
   void testGetListMultipleInclude() {
-    assertThat(ElideNavigator.of(Ladder1v1Map.class)
+    assertThat(ElideNavigator.of(MapPool.class)
                              .collection()
                              .addInclude("mapVersion")
                              .addInclude("mapVersion.map")
-                             .build(), is("/data/ladder1v1Map?include=mapVersion,mapVersion.map"));
+                             .build(), is("/data/mapPool?include=mapVersion,mapVersion.map"));
   }
 
   @Test
   void testGetListFiltered() {
-    assertThat(ElideNavigator.of(Ladder1v1Map.class)
+    assertThat(ElideNavigator.of(MapPool.class)
                              .collection()
                              .setFilter(qBuilder().intNum("mapVersion.id").gt(10).or().string("hello").eq("nana"))
-                             .build(), is("/data/ladder1v1Map?filter=mapVersion.id=gt=\"10\",hello==\"nana\""));
+                             .build(), is("/data/mapPool?filter=mapVersion.id=gt=\"10\",hello==\"nana\""));
   }
 
   @Test
   void testGetListCombinedFilter() {
-    assertThat(ElideNavigator.of(Ladder1v1Map.class)
+    assertThat(ElideNavigator.of(MapPool.class)
                              .collection()
                              .addInclude("mapVersion")
                              .addInclude("mapVersion.map")
                              .pageSize(10)
                              .pageNumber(3)
                              .setFilter(qBuilder().intNum("mapVersion.id").gt(10).or().string("hello").eq("nana"))
-                             .build(), is("/data/ladder1v1Map?include=mapVersion,mapVersion.map&filter=mapVersion.id=gt=\"10\",hello==\"nana\"&page[size]=10&page[number]=3"));
+                             .build(), is("/data/mapPool?include=mapVersion,mapVersion.map&filter=mapVersion.id=gt=\"10\",hello==\"nana\"&page[size]=10&page[number]=3"));
   }
 
   @Test
   void testGetIdMultipleInclude() {
-    assertThat(ElideNavigator.of(Ladder1v1Map.class)
+    assertThat(ElideNavigator.of(MapPool.class)
                              .id("5")
                              .addInclude("mapVersion")
                              .addInclude("mapVersion.map")
-                             .build(), is("/data/ladder1v1Map/5?include=mapVersion,mapVersion.map"));
+                             .build(), is("/data/mapPool/5?include=mapVersion,mapVersion.map"));
   }
 
   @Test
@@ -79,12 +79,12 @@ class ElideNavigatorTest {
 
   @Test
   void testNavigateFromIdToId() {
-    assertThat(ElideNavigator.of(Ladder1v1Map.class)
+    assertThat(ElideNavigator.of(MapPool.class)
                              .id("5")
                              .navigateRelationship(MapVersion.class, "mapVersion")
                              .id("1234")
                              .addInclude("author")
-                             .build(), is("/data/ladder1v1Map/5/mapVersion/1234?include=author"));
+                             .build(), is("/data/mapPool/5/mapVersion/1234?include=author"));
   }
 
   @Test

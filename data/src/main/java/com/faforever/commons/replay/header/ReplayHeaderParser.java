@@ -2,12 +2,10 @@ package com.faforever.commons.replay.header;
 
 import com.faforever.commons.replay.shared.LoadUtils;
 import com.faforever.commons.replay.shared.LuaData;
-import com.google.common.io.LittleEndianDataInputStream;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,188 +15,186 @@ import static com.faforever.commons.replay.shared.LoadUtils.parseLua;
 public class ReplayHeaderParser {
 
   @Contract(pure = true)
-  public static ReplayHeader parse(LittleEndianDataInputStream dataStream) throws IOException {
+  public static ReplayHeader parse(ByteBuffer buffer) {
 
-    String gameVersion = LoadUtils.readString(dataStream);
-    String arg1 = LoadUtils.readString(dataStream); // Always \r\n
+    String gameVersion = LoadUtils.readString(buffer);
+    String arg1 = LoadUtils.readString(buffer); // Always \r\n
 
-    String[] replayAndScenario = LoadUtils.readString(dataStream).split("\\r\\n");
+    String[] replayAndScenario = LoadUtils.readString(buffer).split("\\r\\n");
     String replayVersion = replayAndScenario[0];
     String pathToScenario = replayAndScenario[1];
-    String arg2 = LoadUtils.readString(dataStream); // always \r\n and some unknown character
+    String arg2 = LoadUtils.readString(buffer); // always \r\n and some unknown character
 
-    int sizeModsInBytes = dataStream.readInt();
-    byte[] modBytes = dataStream.readNBytes(sizeModsInBytes);
-    List<GameMod> mods = parseMod(modBytes);
+    int sizeModsInBytes = buffer.getInt();
+    buffer.limit(buffer.position() + sizeModsInBytes);
+    List<GameMod> mods = parseMod(buffer);
+    buffer.limit(buffer.capacity());
 
-    int sizeGameOptionsInBytes = dataStream.readInt();
-    byte[] gameOptionBytes = dataStream.readNBytes(sizeGameOptionsInBytes);
-    GameScenario gameScenario = parseGameScenario((gameOptionBytes));
+    int sizeGameOptionsInBytes = buffer.getInt();
+    buffer.limit(buffer.position() + sizeGameOptionsInBytes);
+    GameScenario gameScenario = parseGameScenario(buffer);
+    buffer.limit(buffer.capacity());
 
-    int numberOfClients = dataStream.readUnsignedByte();
+    int numberOfClients = LoadUtils.getUnsignedByte(buffer);
     List<Source> sources = new ArrayList<>(numberOfClients);
     for (int i = 0; i < numberOfClients; i++) {
-      String playerName = LoadUtils.readString(dataStream);
-      int playerId = dataStream.readInt();
+      String playerName = LoadUtils.readString(buffer);
+      int playerId = buffer.getInt();
       Source source = new Source(i, playerId, playerName);
       sources.add(source);
     }
 
-    boolean cheatsEnabled = dataStream.readUnsignedByte() > 0;
+    boolean cheatsEnabled = LoadUtils.getUnsignedByte(buffer) > 0;
 
-    int numberOfArmies = dataStream.readUnsignedByte();
+    int numberOfArmies = LoadUtils.getUnsignedByte(buffer);
     List<PlayerOptions> allPlayerOptions = new ArrayList<>(numberOfClients);
     for (int i = 0; i < numberOfArmies; i++) {
-      int sizePlayerOptionsInBytes = dataStream.readInt();
-      byte[] playerOptionsBytes = dataStream.readNBytes(sizePlayerOptionsInBytes );
-      PlayerOptions playerOptions = parsePlayerOptions(playerOptionsBytes);
 
-      int playerSource = dataStream.readUnsignedByte();
+      int sizePlayerOptionsInBytes = buffer.getInt();
+      buffer.limit(buffer.position() + sizePlayerOptionsInBytes);
+      PlayerOptions playerOptions = parsePlayerOptions(buffer);
+      buffer.limit(buffer.capacity());
+
+      int playerSource = LoadUtils.getUnsignedByte(buffer);
       allPlayerOptions.add(playerOptions);
 
       if (playerSource != 255) {
-        byte[] arg3 = dataStream.readNBytes(1); // always -1
+        byte arg3 = buffer.get(); // always -1
       }
     }
 
-    int seed = dataStream.readInt();
+    int seed = buffer.getInt();
 
     return new ReplayHeader(gameVersion, replayVersion, pathToScenario, cheatsEnabled, seed, sources, mods, gameScenario, allPlayerOptions);
   }
 
   @Contract(pure = true)
-  private static @Nullable List<GameMod> parseMod(byte[] bytes) throws IOException {
-    try (LittleEndianDataInputStream stream = new LittleEndianDataInputStream((new ByteArrayInputStream(bytes)))) {
-      LuaData modInfo = parseLua(stream);
+  private static @Nullable List<GameMod> parseMod(ByteBuffer buffer) {
+    LuaData modInfo = parseLua(buffer);
 
-      if (modInfo instanceof LuaData.Table table) {
-        return table.value().values().stream().map(
-          e -> {
-            if (e instanceof LuaData.Table luaModInfo) {
-              return new GameMod(
-                luaModInfo.getString("location"),
-                luaModInfo.getString("icon"),
-                luaModInfo.getString("copyright"),
-                luaModInfo.getString("name"),
-                luaModInfo.getString("description"),
-                luaModInfo.getString("author"),
-                luaModInfo.getString("uid"),
-                luaModInfo.getInteger("version"),
-                luaModInfo.getString("url")
-              );
-            }
-
-            return null;
+    if (modInfo instanceof LuaData.Table table) {
+      return table.value().values().stream().map(
+        e -> {
+          if (e instanceof LuaData.Table luaModInfo) {
+            return new GameMod(
+              luaModInfo.getString("location"),
+              luaModInfo.getString("icon"),
+              luaModInfo.getString("copyright"),
+              luaModInfo.getString("name"),
+              luaModInfo.getString("description"),
+              luaModInfo.getString("author"),
+              luaModInfo.getString("uid"),
+              luaModInfo.getInteger("version"),
+              luaModInfo.getString("url")
+            );
           }
-        ).toList();
-      }
 
-      return null;
+          return null;
+        }
+      ).toList();
     }
+
+    return null;
   }
 
   @Contract(pure = true)
-  private static @Nullable GameScenario parseGameScenario(byte[] bytes) throws IOException {
-    try (LittleEndianDataInputStream stream = new LittleEndianDataInputStream((new ByteArrayInputStream(bytes)))) {
-      LuaData gameScenario = parseLua(stream);
+  private static @Nullable GameScenario parseGameScenario(ByteBuffer buffer) {
+    LuaData gameScenario = parseLua(buffer);
 
-      if (gameScenario instanceof LuaData.Table table) {
+    if (gameScenario instanceof LuaData.Table table) {
 
-        // retrieve and manage the game options
-        String scenarioFile = null;
-        GameOptions gameOptions = null;
-        Map<String, String> modOptions = null;
-        if (table.value().get("Options") instanceof LuaData.Table optionsTable) {
+      // retrieve and manage the game options
+      String scenarioFile = null;
+      GameOptions gameOptions = null;
+      Map<String, String> modOptions = null;
+      if (table.value().get("Options") instanceof LuaData.Table optionsTable) {
 
-          scenarioFile = optionsTable.getString("ScenarioFile");
-          gameOptions = new GameOptions(
-            GameOptions.AutoTeams.findByKey(optionsTable.getString("AutoTeams")),
-            GameOptions.TeamLock.findByKey(optionsTable.getString("TeamLock")),
-            GameOptions.TeamSpawn.findByKey(optionsTable.getString("TeamSpawn")),
-            optionsTable.getBool("AllowObservers"),
-            optionsTable.getBool("CheatsEnabled"),
-            optionsTable.getBool("PrebuiltUnits"),
-            optionsTable.getBool("RevealCivilians"),
-            optionsTable.getBool("Score"),
-            optionsTable.getInteger("UnitCap"),
-            optionsTable.getString("Unranked"),
-            GameOptions.Victory.findByKey(optionsTable.getString("Victory"))
-          );
-
-          optionsTable.removeKey("AutoTeams");
-          optionsTable.removeKey("TeamLock");
-          optionsTable.removeKey("TeamSpawn");
-          optionsTable.removeKey("AllowObservers");
-          optionsTable.removeKey("CheatsEnabled");
-          optionsTable.removeKey("PrebuiltUnits");
-          optionsTable.removeKey("RevealCivilians");
-          optionsTable.removeKey("Score");
-          optionsTable.removeKey("UnitCap");
-          optionsTable.removeKey("Unranked");
-          optionsTable.removeKey("Victory");
-
-          modOptions = optionsTable.toKeyStringValuePairs();
-        }
-
-        Integer sizeX = null;
-        Integer sizeZ = null;
-        if (table.getTable("size") instanceof LuaData.Table sizeTable) {
-          sizeX = sizeTable.getInteger("1.0");
-          sizeZ = sizeTable.getInteger("2.0");
-        }
-
-        Integer massReclaimValue = null;
-        Integer energyReclaimValue = null;
-        if (table.value().get("reclaim") instanceof LuaData.Table reclaimTable) {
-          massReclaimValue = reclaimTable.getInteger("1.0");
-          energyReclaimValue = reclaimTable.getInteger("2.0");
-        }
-
-        return new GameScenario(
-          scenarioFile,
-          table.getString("map"),
-          table.getInteger("map_version"),
-          table.getString("description"),
-          table.getString("script"),
-          table.getString("save"),
-          table.getString("name"),
-          sizeX, sizeZ,
-          massReclaimValue, energyReclaimValue,
-          gameOptions, modOptions
+        scenarioFile = optionsTable.getString("ScenarioFile");
+        gameOptions = new GameOptions(
+          GameOptions.AutoTeams.findByKey(optionsTable.getString("AutoTeams")),
+          GameOptions.TeamLock.findByKey(optionsTable.getString("TeamLock")),
+          GameOptions.TeamSpawn.findByKey(optionsTable.getString("TeamSpawn")),
+          optionsTable.getBool("AllowObservers"),
+          optionsTable.getBool("CheatsEnabled"),
+          optionsTable.getBool("PrebuiltUnits"),
+          optionsTable.getBool("RevealCivilians"),
+          optionsTable.getBool("Score"),
+          optionsTable.getInteger("UnitCap"),
+          optionsTable.getString("Unranked"),
+          GameOptions.Victory.findByKey(optionsTable.getString("Victory"))
         );
 
+        optionsTable.removeKey("AutoTeams");
+        optionsTable.removeKey("TeamLock");
+        optionsTable.removeKey("TeamSpawn");
+        optionsTable.removeKey("AllowObservers");
+        optionsTable.removeKey("CheatsEnabled");
+        optionsTable.removeKey("PrebuiltUnits");
+        optionsTable.removeKey("RevealCivilians");
+        optionsTable.removeKey("Score");
+        optionsTable.removeKey("UnitCap");
+        optionsTable.removeKey("Unranked");
+        optionsTable.removeKey("Victory");
+
+        modOptions = optionsTable.toKeyStringValuePairs();
       }
 
-      return null;
+      Integer sizeX = null;
+      Integer sizeZ = null;
+      if (table.getTable("size") instanceof LuaData.Table sizeTable) {
+        sizeX = sizeTable.getInteger("1.0");
+        sizeZ = sizeTable.getInteger("2.0");
+      }
+
+      Integer massReclaimValue = null;
+      Integer energyReclaimValue = null;
+      if (table.value().get("reclaim") instanceof LuaData.Table reclaimTable) {
+        massReclaimValue = reclaimTable.getInteger("1.0");
+        energyReclaimValue = reclaimTable.getInteger("2.0");
+      }
+
+      return new GameScenario(
+        scenarioFile,
+        table.getString("map"),
+        table.getInteger("map_version"),
+        table.getString("description"),
+        table.getString("script"),
+        table.getString("save"),
+        table.getString("name"),
+        sizeX, sizeZ,
+        massReclaimValue, energyReclaimValue,
+        gameOptions, modOptions
+      );
+
     }
+
+    return null;
   }
 
   @Contract(pure = true)
-  private static @Nullable PlayerOptions parsePlayerOptions(byte[] bytes) throws IOException {
-    try (LittleEndianDataInputStream stream = new LittleEndianDataInputStream((new ByteArrayInputStream(bytes)))) {
-      LuaData playerOptions = parseLua(stream);
+  private static @Nullable PlayerOptions parsePlayerOptions(ByteBuffer buffer) {
+    LuaData playerOptions = parseLua(buffer);
 
-      if (playerOptions instanceof LuaData.Table table) {
-        return new PlayerOptions(
-          table.getBool("Human"),
-          table.getString("AIPersonality"),
-          table.getFloat("MEAN"),
-          table.getFloat("DEV"),
-          table.getString("PlayerClan"),
-          table.getBool("Civilian"),
-          table.getInteger("StartSpot"),
-          table.getString("ArmyName"),
-          table.getInteger("ArmyColor"),
-          table.getInteger("PlayerColor"),
-          table.getString("PlayerName"),
-          table.getInteger("NG"),
-          table.getString("Country"),
-          table.getInteger("Team"),
-          table.getInteger("Faction")
-        );
-      }
-
-      return null;
+    if (playerOptions instanceof LuaData.Table table) {
+      return new PlayerOptions(
+        table.getBool("Human"),
+        table.getString("AIPersonality"),
+        table.getFloat("MEAN"),
+        table.getFloat("DEV"),
+        table.getString("PlayerClan"),
+        table.getBool("Civilian"),
+        table.getInteger("StartSpot"),
+        table.getString("ArmyName"),
+        table.getInteger("ArmyColor"),
+        table.getInteger("PlayerColor"),
+        table.getString("PlayerName"),
+        table.getInteger("NG"),
+        table.getString("Country"),
+        table.getInteger("Team"),
+        table.getInteger("Faction")
+      );
     }
+
+    return null;
   }
 }

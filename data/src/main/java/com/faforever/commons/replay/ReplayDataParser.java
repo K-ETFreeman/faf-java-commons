@@ -4,30 +4,29 @@ import com.faforever.commons.replay.body.Event;
 import com.faforever.commons.replay.body.ReplayBodyParser;
 import com.faforever.commons.replay.body.ReplayBodyToken;
 import com.faforever.commons.replay.body.ReplayBodyTokenizer;
+import com.faforever.commons.replay.shared.LoadUtils;
 import com.faforever.commons.replay.shared.LuaData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.io.BaseEncoding;
-import com.google.common.io.LittleEndianDataInputStream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorInputStream;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
-import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
 
 @SuppressWarnings("unused")
 @Slf4j
@@ -46,7 +45,7 @@ public class ReplayDataParser {
   @Getter
   private String replayPatchFieldId;
   @Getter
-  private byte[] data;
+  private ByteBuffer data;
   @Getter
   private String map;
   @Getter
@@ -59,7 +58,7 @@ public class ReplayDataParser {
   @Getter
   private final List<ModeratorEvent> moderatorEvents = new ArrayList<>();
   @Getter
-  private final Map<Integer, Map<Integer, AtomicInteger>> commandsPerMinuteByPlayer = new HashMap<>();
+  private Map<String, Integer> playerIdsByName;
 
   private int ticks;
 
@@ -80,61 +79,68 @@ public class ReplayDataParser {
   }
 
   @VisibleForTesting
-  static String readString(LittleEndianDataInputStream dataStream) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    byte tempByte;
-    while ((tempByte = dataStream.readByte()) != 0) {
-      out.write(tempByte);
+  static String readString(ByteBuffer buffer) {
+    final int offset = buffer.position();
+    while (buffer.get() != 0) {
     }
-    return out.toString(StandardCharsets.UTF_8);
+    final int length = buffer.position() - 1 - offset;
+    byte[] stringBytes = new byte[length];
+    buffer.get(offset, stringBytes);
+    return new String(stringBytes, StandardCharsets.UTF_8);
   }
 
-  private Object parseLua(LittleEndianDataInputStream dataStream) throws IOException {
-    int type = dataStream.readUnsignedByte();
+  private Object parseLua(ByteBuffer buffer) {
+    int type = LoadUtils.getUnsignedByte(buffer);
     switch (type) {
       case LUA_NUMBER:
-        return dataStream.readFloat();
+        return buffer.getFloat();
       case LUA_STRING:
-        return readString(dataStream);
+        return readString(buffer);
       case LUA_NIL:
-        dataStream.skipBytes(1);
+        buffer.get();
         return null;
       case LUA_BOOL: // bool
-        return dataStream.readUnsignedByte() == 0;
+        return LoadUtils.getUnsignedByte(buffer) == 0;
       case LUA_TABLE_START: // lua
         Map<String, Object> result = new HashMap<>();
-        while (peek(dataStream) != LUA_TABLE_END) {
-          Object key = parseLua(dataStream);
+        while (peek(buffer) != LUA_TABLE_END) {
+          Object key = parseLua(buffer);
           if (key instanceof Number) {
             key = ((Number) key).intValue();
           }
-          result.put(String.valueOf(key), parseLua(dataStream));
-          dataStream.mark(1);
+          result.put(String.valueOf(key), parseLua(buffer));
+          buffer.mark();
         }
-        dataStream.skipBytes(1);
+        buffer.get();
         return result;
       default:
         throw new IllegalStateException("Unexpected data type: " + type);
     }
   }
 
-  private int peek(LittleEndianDataInputStream dataStream) throws IOException {
-    dataStream.mark(1);
-    int next = dataStream.readUnsignedByte();
-    dataStream.reset();
+  private int peek(ByteBuffer buffer) {
+    buffer.mark();
+    int next = LoadUtils.getUnsignedByte(buffer);
+    buffer.reset();
     return next;
   }
 
   private void readReplayData(Path replayFile) throws IOException, CompressorException {
     byte[] allReplayData = Files.readAllBytes(replayFile);
     int headerEnd = findReplayHeaderEnd(allReplayData);
-    metadata = objectMapper.readValue(new String(Arrays.copyOf(allReplayData, headerEnd), StandardCharsets.UTF_8), ReplayMetadata.class);
-    data = decompress(Arrays.copyOfRange(allReplayData, headerEnd + 1, allReplayData.length), metadata);
+    ByteBuffer buffer = ByteBuffer.wrap(allReplayData);
+
+    buffer.limit(headerEnd);
+    final String decodedMetadata = StandardCharsets.UTF_8.newDecoder().decode(buffer).toString();
+    metadata = objectMapper.readValue(decodedMetadata, ReplayMetadata.class);
+    buffer.limit(buffer.capacity());
+
+    buffer.position(headerEnd + 1);
+    data = decompress(buffer, metadata);
   }
 
   private int findReplayHeaderEnd(byte[] replayData) {
-    int headerEnd;
-    for (headerEnd = 0; headerEnd < replayData.length; headerEnd++) {
+    for (int headerEnd = 0; headerEnd < replayData.length; headerEnd++) {
       if (replayData[headerEnd] == '\n') {
         return headerEnd;
       }
@@ -142,20 +148,22 @@ public class ReplayDataParser {
     throw new IllegalArgumentException("Missing separator between replay header and body");
   }
 
-  private byte[] decompress(byte[] data, @NotNull ReplayMetadata metadata) throws IOException, CompressorException {
+  private ByteBuffer decompress(ByteBuffer inputBuffer, @NotNull ReplayMetadata metadata) throws IOException, CompressorException {
     CompressionType compressionType = Objects.requireNonNullElse(metadata.getCompression(), CompressionType.QTCOMPRESS);
 
     switch (compressionType) {
       case QTCOMPRESS: {
-        return QtCompress.qUncompress(BaseEncoding.base64().decode(new String(data)));
+        return QtCompress.qUncompress(Base64.getDecoder().decode(inputBuffer));
       }
       case ZSTD: {
-        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(data);
+        byte[] inputArray = new byte[inputBuffer.remaining()];
+        inputBuffer.get(inputArray);
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(inputArray);
         CompressorInputStream compressorInputStream = new CompressorStreamFactory().createCompressorInputStream(arrayInputStream);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         IOUtils.copy(compressorInputStream, out);
-        return out.toByteArray();
+        return ByteBuffer.wrap(out.toByteArray());
       }
       case UNKNOWN:
       default:
@@ -164,51 +172,51 @@ public class ReplayDataParser {
   }
 
   @SuppressWarnings("unchecked")
-  private void parseHeader(LittleEndianDataInputStream dataStream) throws IOException {
-    replayPatchFieldId = readString(dataStream);
-    String arg13 = readString(dataStream); // always \r\n
+  private void parseHeader(ByteBuffer buffer) {
+    replayPatchFieldId = readString(buffer);
+    String arg13 = readString(buffer); // always \r\n
 
-    String[] split = readString(dataStream).split("\\r\\n");
+    String[] split = readString(buffer).split("\\r\\n");
     String replayVersionId = split[0];
     map = split[1];
-    String arg23 = readString((dataStream)); // always \r\n and some unknown character
+    String arg23 = readString((buffer)); // always \r\n and some unknown character
 
-    int sizeModsInBytes = dataStream.readInt();
-    mods = (Map<String, Map<String, ?>>) parseLua(dataStream);
+    int sizeModsInBytes = buffer.getInt();
+    mods = (Map<String, Map<String, ?>>) parseLua(buffer);
 
-    int sizeGameOptionsInBytes = dataStream.readInt();
-    this.gameOptions = ((Map<String, Object>) parseLua(dataStream)).entrySet().stream()
+    int sizeGameOptionsInBytes = buffer.getInt();
+    this.gameOptions = ((Map<String, Object>) parseLua(buffer)).entrySet().stream()
       .filter(entry -> "Options".equals(entry.getKey()))
       .flatMap(entry -> ((Map<String, Object>) entry.getValue()).entrySet().stream())
       .map(entry -> new GameOption(entry.getKey(), entry.getValue()))
       .collect(Collectors.toList());
 
-    int numberOfSources = dataStream.readUnsignedByte();
+    int numberOfSources = LoadUtils.getUnsignedByte(buffer);
 
-    Map<String, Object> playerIdsByName = new HashMap<>();
+    playerIdsByName = new HashMap<>();
     for (int i = 0; i < numberOfSources; i++) {
-      String playerName = readString(dataStream);
-      int playerId = dataStream.readInt();
+      String playerName = readString(buffer);
+      int playerId = buffer.getInt();
       playerIdsByName.put(playerName, playerId);
     }
 
-    boolean cheatsEnabled = dataStream.readUnsignedByte() > 0;
+    boolean cheatsEnabled = LoadUtils.getUnsignedByte(buffer) > 0;
 
-    int numberOfArmies = dataStream.readUnsignedByte();
+    int numberOfArmies = LoadUtils.getUnsignedByte(buffer);
     for (int i = 0; i < numberOfArmies; i++) {
-      int sizePlayerDataInBytes = dataStream.readInt();
-      Map<String, Object> playerData = (Map<String, Object>) parseLua(dataStream);
-      int playerSource = dataStream.readUnsignedByte();
+      int sizePlayerDataInBytes = buffer.getInt();
+      Map<String, Object> playerData = (Map<String, Object>) parseLua(buffer);
+      int playerSource = LoadUtils.getUnsignedByte(buffer);
 
       armies.put(playerSource, playerData);
       playerData.put("commands", new ArrayList<>());
 
       if (playerSource != 255) {
-        dataStream.skipBytes(1);
+        buffer.get();
       }
     }
 
-    randomSeed = dataStream.readInt();
+    randomSeed = buffer.getInt();
   }
 
   private void interpretEvents(List<Event> events) {
@@ -248,7 +256,7 @@ public class ReplayDataParser {
           previousTick = ticks;
 
           if (desync) {
-            log.warn("Replay desynced");
+//            log.warn("Replay desynced");
             return;
           }
         }
@@ -288,19 +296,13 @@ public class ReplayDataParser {
         case Event.IssueCommand(
           Event.CommandUnits commandUnits, Event.CommandData commandData
         ) -> {
-          commandsPerMinuteByPlayer
-            .computeIfAbsent(player, p -> new HashMap<>())
-            .computeIfAbsent(ticks, t -> new AtomicInteger())
-            .incrementAndGet();
+
         }
 
         case Event.IssueFactoryCommand(
           Event.CommandUnits commandUnits, Event.CommandData commandData
         ) -> {
-          commandsPerMinuteByPlayer
-            .computeIfAbsent(player, p -> new HashMap<>())
-            .computeIfAbsent(ticks, t -> new AtomicInteger())
-            .incrementAndGet();
+
         }
 
         case Event.IncreaseCommandCount(int commandId, int delta) -> {
@@ -364,39 +366,36 @@ public class ReplayDataParser {
   }
 
   private void parseGiveResourcesToPlayer(LuaData.Table lua) {
-    if (lua.value().containsKey("Msg") && lua.value().containsKey("From") && lua.value().containsKey("Sender")) {
+    // TODO: use the command source (player value) instead of the values from the callback. The values from the callback can be manipulated
+    if (!(lua.value().get("From") instanceof LuaData.Number(float luaFromArmy))) {
+      return;
+    }
 
-      // TODO: use the command source (player value) instead of the values from the callback. The values from the callback can be manipulated
-      if (!(lua.value().get("From") instanceof LuaData.Number(float luaFromArmy))) {
-        return;
-      }
+    int fromArmy = (int) luaFromArmy - 1;
+    if (fromArmy == -2) {
+      return;
+    }
 
-      int fromArmy = (int) luaFromArmy - 1;
-      if (fromArmy == -2) {
-        return;
-      }
+    if (!(lua.value().get("Msg") instanceof LuaData.Table(Map<String, LuaData> luaMsg))) {
+      return;
+    }
 
-      if (!(lua.value().get("Msg") instanceof LuaData.Table(Map<String, LuaData> luaMsg))) {
-        return;
-      }
+    if (!(lua.value().get("Sender") instanceof LuaData.String(String luaSender))) {
+      return;
+    }
 
-      if (!(lua.value().get("Sender") instanceof LuaData.String(String luaSender))) {
-        return;
-      }
+    // This can either be a player name or a Map of something, in which case it's actually giving resources
+    if (!(luaMsg.get("to") instanceof LuaData.String(String luaMsgReceiver))) {
+      return;
+    }
 
-      // This can either be a player name or a Map of something, in which case it's actually giving resources
-      if (!(luaMsg.get("to") instanceof LuaData.String(String luaMsgReceiver))) {
-        return;
-      }
+    if (!(luaMsg.get("text") instanceof LuaData.String(String luaMsgText))) {
+      return;
+    }
 
-      if (!(luaMsg.get("text") instanceof LuaData.String(String luaMsgText))) {
-        return;
-      }
-
-      Map<String, Object> army = armies.get(fromArmy);
-      if (army != null && Objects.equals(army.get("PlayerName"), luaSender)) {
-        chatMessages.add(new ChatMessage(tickToTime(ticks), luaSender, String.valueOf(luaMsgReceiver), luaMsgText));
-      }
+    Map<String, Object> army = armies.get(fromArmy);
+    if (army != null && Objects.equals(army.get("PlayerName"), luaSender)) {
+      chatMessages.add(new ChatMessage(tickToTime(ticks), luaSender, String.valueOf(luaMsgReceiver), luaMsgText));
     }
   }
 
@@ -443,11 +442,15 @@ public class ReplayDataParser {
 
   private void parse() throws IOException, CompressorException {
     readReplayData(path);
-    try (LittleEndianDataInputStream dataStream = new LittleEndianDataInputStream(new ByteArrayInputStream(data))) {
-      parseHeader(dataStream);
-      tokens = ReplayBodyTokenizer.tokenize(dataStream);
-    }
-    events = ReplayBodyParser.parseTokens(tokens);
+    data.order(ByteOrder.LITTLE_ENDIAN);
+
+    parseHeader(data);
+
+    var rewindPosition = data.position();
+    tokens = ReplayBodyTokenizer.tokenize(data);
+    data.position(rewindPosition);
+
+    events = ReplayBodyParser.parseTokens(tokens, data);
     interpretEvents(events);
   }
 }

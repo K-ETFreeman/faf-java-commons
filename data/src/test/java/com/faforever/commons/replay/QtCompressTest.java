@@ -2,6 +2,7 @@ package com.faforever.commons.replay;
 
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 import static com.faforever.commons.test.IsUtilityClassMatcher.isUtilityClass;
@@ -30,8 +31,8 @@ class QtCompressTest {
   }
 
   @Test
-  void testQUncompress() throws Exception {
-    byte[] uncompressedBytes = QtCompress.qUncompress(COMPRESSED_BYTES);
-    assertArrayEquals(UNCOMPRESSED_BYTES, uncompressedBytes);
+  void testQUncompress() {
+    ByteBuffer uncompressedByteBuffer = QtCompress.qUncompress(ByteBuffer.wrap(COMPRESSED_BYTES));
+    assertArrayEquals(UNCOMPRESSED_BYTES, uncompressedByteBuffer.array());
   }
 }

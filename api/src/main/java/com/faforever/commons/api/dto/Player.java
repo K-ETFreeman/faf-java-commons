@@ -31,20 +31,13 @@ public class Player extends AbstractEntity<Player> {
   private List<NameRecord> names;
 
   @Deprecated
-  @Relationship("globalRating")
-  private GlobalRating globalRating;
-
-  @Deprecated
-  @Relationship("ladder1v1Rating")
-  private Ladder1v1Rating ladder1v1Rating;
-
-  @Deprecated
-  @Relationship("lobbyGroup")
-  private LobbyGroup lobbyGroup;
-
   @Relationship("uniqueIds")
   @RestrictedVisibility("IsModerator")
   private Set<UniqueId> uniqueIds;
+
+  @Relationship("uniqueIdAssignments")
+  @RestrictedVisibility("IsModerator")
+  private Set<UniqueIdAssignment> uniqueIdAssignments;
 
   @Relationship("accountLinks")
   @RestrictedVisibility("IsModerator")
