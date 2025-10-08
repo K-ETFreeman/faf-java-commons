@@ -54,7 +54,7 @@ kotlin {
 
 mavenPublishing {
   publishToMavenCentral()
-  signAllPublications() // Commented out for JitPack builds
+  signAllPublications()
 
   coordinates("com.faforever.commons", "lobby", project.version.toString())
   // Configure POM metadata

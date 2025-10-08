@@ -33,7 +33,7 @@ dependencies {
 
 mavenPublishing {
   publishToMavenCentral()
-  signAllPublications() // Commented out for JitPack builds
+  signAllPublications()
 
   coordinates("com.faforever.commons", "data", project.version.toString())
   // Configure POM metadata
